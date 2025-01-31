@@ -1,1 +1,3 @@
-customElements.define('calendar-view', FullCalendarElement);
+class CalendarViewElement extends FullCalendarElement {}
+
+customElements.define('calendar-view', CalendarViewElement);
