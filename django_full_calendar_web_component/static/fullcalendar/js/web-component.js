@@ -10,6 +10,9 @@ class CalendarElement extends FullCalendarElement {
   _optionsToFullCalendar(options) {
     // TODO: do the real conversion
     console.log("options", options);
+
+    // Add the Non-Commercial license key
+    options.schedulerLicenseKey = "CC-Attribution-NonCommercial-NoDerivatives";
     return options;
   }
 
