@@ -50,6 +50,9 @@ class CalendarElement extends FullCalendarElement {
       nowIndicator: true,
       slotDuration: options.slotDuration,
       themeSystem: "bootstrap5",
+      eventDidMount: (info) => {
+        new FCTooltip(info.el, info.event);
+      },
     };
 
     // Add the Non-Commercial license key

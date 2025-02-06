@@ -16,3 +16,37 @@
 .fc .event--type-reserved .fc-event-title::before {
   content: "\f02b";
 }
+
+.fc-tooltip {
+  position: fixed;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  z-index: 999;
+
+  transition: none 0.2s ease-in-out;
+  transition-property: visibility, opacity;
+  transition-delay: 0;
+  visibility: hidden;
+  opacity: 0;
+
+  min-height: 100px;
+  min-width: 180px;
+}
+
+.fc-tooltip.show {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0.2s;
+}
+
+.fc-tooltip .title {
+  background-color: #eee;
+  border-bottom: 1px solid #ccc;
+  display: block;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
