@@ -22,7 +22,7 @@ class CalendarElement extends FullCalendarElement {
     "#cddc39",
   ];
 
-  static RESERVED_COLOR = "#9e9e9e";
+  static RESERVED_BG = "#9e9e9e";
 
   static _getColor(index) {
     return CalendarElement.EVENT_COLORS[
@@ -66,9 +66,18 @@ class CalendarElement extends FullCalendarElement {
 
     if (options.events?.length) {
       options.events.forEach((event) => {
-        const newEvent = { id: event.id, start: event.start, end: event.end };
+        const newEvent = {
+          id: event.id,
+          start: event.start,
+          end: event.end,
+          extendedProps: {},
+        };
         // Instruments are mapped to resources
         if (event.instrument) {
+          newEvent.extendedProps = {
+            ...newEvent.extendedProps,
+            instrument: event.instrument,
+          };
           const instrumentTitle = event.instrument;
           let resource = resources.find((r) => r.title === instrumentTitle);
 
@@ -81,6 +90,10 @@ class CalendarElement extends FullCalendarElement {
 
         // Proposals sets the color and title
         if (event.proposal) {
+          newEvent.extendedProps = {
+            ...newEvent.extendedProps,
+            proposal: event.proposal,
+          };
           const proposalTitle = event.proposal;
           let proposal = proposals.find((p) => p.title === proposalTitle);
 
@@ -95,11 +108,15 @@ class CalendarElement extends FullCalendarElement {
         }
 
         if (event.type) {
+          newEvent.extendedProps = {
+            ...newEvent.extendedProps,
+            type: event.type,
+          };
           newEvent.classNames = [`event--type-${event.type}`];
 
           if (event.type === "reserved") {
-            newEvent.backgroundColor = CalendarElement.RESERVED_COLOR;
-            newEvent.borderColor = CalendarElement.RESERVED_COLOR;
+            newEvent.backgroundColor = CalendarElement.RESERVED_BG;
+            newEvent.borderColor = CalendarElement.RESERVED_BG;
             newEvent.title = "Reserved";
           }
         }

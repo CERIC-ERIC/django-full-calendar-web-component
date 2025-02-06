@@ -18,35 +18,47 @@
 }
 
 .fc-tooltip {
+  min-height: 100px;
+  min-width: 180px;
+  overflow: hidden;
   position: fixed;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: white;
+  display: flex;
+  flex-direction: column;
   border-radius: 4px;
-  border: 1px solid #ccc;
   z-index: 999;
+  gap: -1px;
+  font-size: 14px;
+  border: 1px solid #cccccc;
 
-  transition: none 0.2s ease-in-out;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+
+  transition: none 0.1s ease-in-out;
   transition-property: visibility, opacity;
   transition-delay: 0;
   visibility: hidden;
   opacity: 0;
-
-  min-height: 100px;
-  min-width: 180px;
 }
 
-.fc-tooltip.show {
+.fc-tooltip--show {
   visibility: visible;
   opacity: 1;
   transition-delay: 0.2s;
 }
 
-.fc-tooltip .title {
-  background-color: #eee;
-  border-bottom: 1px solid #ccc;
-  display: block;
-  padding: 4px 8px;
+.fc-tooltip__title-box {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  background-color: #eeeeee;
+  color: black;
+  border-bottom: 1px solid #cccccc;
+  padding: 4px;
   white-space: nowrap;
+  overflow: hidden;
+}
+
+.fc-tooltip__body {
+  flex: 1 1 auto;
+  background-color: white;
+  padding: 4px 8px;
 }
