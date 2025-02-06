@@ -9,19 +9,35 @@ class FCTooltip {
     minute: "2-digit",
   };
 
+  static instances = {};
+
   eventElem = null;
   eventInfo = null;
   tooltip = null;
 
   constructor(el, eventInfo) {
+    const instanceId = eventInfo._instance.instanceId;
+    if (FCTooltip.instances[instanceId]) {
+      FCTooltip.instances[instanceId].destroy();
+    }
+
     this.eventElem = el;
     this.eventInfo = eventInfo;
     this.tooltip = this.createTooltip();
 
     this.setupTooltipListeners();
+
+    FCTooltip.instances[instanceId] = this;
   }
 
-  createTooltip() {
+  destroy = () => {
+    this.tooltip.remove();
+    this.eventElem.removeEventListener("mouseenter", this.mouseEnterHandler);
+    this.eventElem.removeEventListener("mouseleave", this.mouseLeaveHandler);
+    delete FCTooltip.instances[this.eventInfo._instance.instanceId];
+  };
+
+  createTooltip = () => {
     const tooltip = document.createElement("div");
     tooltip.className = "fc-tooltip";
 
@@ -70,20 +86,14 @@ class FCTooltip {
     document.body.appendChild(tooltip);
 
     return tooltip;
-  }
+  };
 
-  setupTooltipListeners() {
-    this.eventElem.addEventListener(
-      "mouseenter",
-      this.mouseEnterHandler.bind(this)
-    );
-    this.eventElem.addEventListener(
-      "mouseleave",
-      this.mouseLeaveHandler.bind(this)
-    );
-  }
+  setupTooltipListeners = () => {
+    this.eventElem.addEventListener("mouseenter", this.mouseEnterHandler);
+    this.eventElem.addEventListener("mouseleave", this.mouseLeaveHandler);
+  };
 
-  getTooltipPosition(event) {
+  getTooltipPosition = (event) => {
     const rect = this.eventElem.getBoundingClientRect();
 
     const posX = Math.round(event.clientX - this.tooltip.offsetWidth / 2);
@@ -111,17 +121,21 @@ class FCTooltip {
     }
 
     return { x: fixedPosX, y: fixedPosY };
-  }
+  };
 
-  mouseEnterHandler(event) {
-    console.log(this.eventInfo);
+  mouseEnterHandler = (event) => {
+    // if mouse is down return
+    if (event.buttons > 0) {
+      return;
+    }
+
     const tooltipPosition = this.getTooltipPosition(event);
     this.tooltip.style.left = `${tooltipPosition.x}px`;
     this.tooltip.style.top = `${tooltipPosition.y}px`;
     this.tooltip.classList.add("fc-tooltip--show");
-  }
+  };
 
-  mouseLeaveHandler() {
+  mouseLeaveHandler = () => {
     this.tooltip.classList.remove("fc-tooltip--show");
-  }
+  };
 }

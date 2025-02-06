@@ -53,6 +53,9 @@ class CalendarElement extends FullCalendarElement {
       eventDidMount: (info) => {
         new FCTooltip(info.el, info.event);
       },
+      editable: true,
+      eventOverlap: false,
+      eventResourceEditable: false,
     };
 
     // Add the Non-Commercial license key
