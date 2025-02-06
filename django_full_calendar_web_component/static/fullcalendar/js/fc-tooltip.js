@@ -18,7 +18,7 @@ class FCTooltip {
   constructor(el, eventInfo) {
     const instanceId = eventInfo._instance.instanceId;
     if (FCTooltip.instances[instanceId]) {
-      FCTooltip.instances[instanceId].destroy();
+      throw new Error("Tooltip already exists for this event");
     }
 
     this.eventElem = el;
@@ -29,13 +29,6 @@ class FCTooltip {
 
     FCTooltip.instances[instanceId] = this;
   }
-
-  destroy = () => {
-    this.tooltip.remove();
-    this.eventElem.removeEventListener("mouseenter", this.mouseEnterHandler);
-    this.eventElem.removeEventListener("mouseleave", this.mouseLeaveHandler);
-    delete FCTooltip.instances[this.eventInfo._instance.instanceId];
-  };
 
   createTooltip = () => {
     const tooltip = document.createElement("div");

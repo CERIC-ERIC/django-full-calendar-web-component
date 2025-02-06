@@ -51,7 +51,10 @@ class CalendarElement extends FullCalendarElement {
       slotDuration: options.slotDuration,
       themeSystem: "bootstrap5",
       eventDidMount: (info) => {
-        new FCTooltip(info.el, info.event);
+        if (!FCTooltip.instances[info.event._instance.instanceId]) {
+          console.log("Creating tooltip");
+          new FCTooltip(info.el, info.event);
+        }
       },
       editable: true,
       eventOverlap: false,
