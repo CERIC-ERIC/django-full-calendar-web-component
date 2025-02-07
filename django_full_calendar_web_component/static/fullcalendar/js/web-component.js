@@ -51,14 +51,19 @@ class CalendarElement extends FullCalendarElement {
       slotDuration: options.slotDuration,
       themeSystem: "bootstrap5",
       eventDidMount: (info) => {
-        if (!FCTooltip.instances[info.event._instance.instanceId]) {
-          console.log("Creating tooltip");
+        if (!info.isMirror) {
           new FCTooltip(info.el, info.event);
         }
       },
+      eventWillUnmount: (info) => {
+        if (!info.isMirror) {
+          const tooltip = FCTooltip.getInstace(info.event);
+          if (tooltip) {
+            tooltip.dispose();
+          }
+        }
+      },
       editable: true,
-      eventOverlap: false,
-      eventResourceEditable: false,
     };
 
     // Add the Non-Commercial license key

@@ -15,11 +15,18 @@ class FCTooltip {
   eventInfo = null;
   tooltip = null;
 
+  static getInstace = (eventInfo) => {
+    const instanceId = eventInfo._instance.instanceId;
+
+    if (FCTooltip.instances[instanceId]) {
+      return FCTooltip.instances[instanceId];
+    } else {
+      return null;
+    }
+  };
+
   constructor(el, eventInfo) {
     const instanceId = eventInfo._instance.instanceId;
-    if (FCTooltip.instances[instanceId]) {
-      throw new Error("Tooltip already exists for this event");
-    }
 
     this.eventElem = el;
     this.eventInfo = eventInfo;
@@ -29,6 +36,13 @@ class FCTooltip {
 
     FCTooltip.instances[instanceId] = this;
   }
+
+  dispose = () => {
+    this.eventElem.removeEventListener("mouseenter", this.mouseEnterHandler);
+    this.eventElem.removeEventListener("mouseleave", this.mouseLeaveHandler);
+    this.tooltip.remove();
+    delete FCTooltip.instances[this.eventInfo._instance.instanceId];
+  };
 
   createTooltip = () => {
     const tooltip = document.createElement("div");
