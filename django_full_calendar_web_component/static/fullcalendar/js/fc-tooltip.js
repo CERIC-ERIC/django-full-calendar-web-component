@@ -1,6 +1,8 @@
 class FCTooltip {
   static TOOLTIP_MARGIN = 4;
   static TOOLTIP_WINDOW_MARGIN = 16;
+  static TOOLTIP_INSTANCES = {};
+
   static DATE_FORMAT = {
     month: "numeric",
     year: "numeric",
@@ -9,8 +11,6 @@ class FCTooltip {
     minute: "2-digit",
   };
 
-  static instances = {};
-
   eventElem = null;
   eventInfo = null;
   tooltip = null;
@@ -18,8 +18,8 @@ class FCTooltip {
   static getInstace = (eventInfo) => {
     const instanceId = eventInfo._instance.instanceId;
 
-    if (FCTooltip.instances[instanceId]) {
-      return FCTooltip.instances[instanceId];
+    if (FCTooltip.TOOLTIP_INSTANCES[instanceId]) {
+      return FCTooltip.TOOLTIP_INSTANCES[instanceId];
     } else {
       return null;
     }
@@ -30,43 +30,29 @@ class FCTooltip {
 
     this.eventElem = el;
     this.eventInfo = eventInfo;
-    this.tooltip = this.createTooltip();
+
+    this.createTooltip();
 
     this.setupTooltipListeners();
 
-    FCTooltip.instances[instanceId] = this;
+    FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;
   }
 
   dispose = () => {
     this.eventElem.removeEventListener("mouseenter", this.mouseEnterHandler);
     this.eventElem.removeEventListener("mouseleave", this.mouseLeaveHandler);
     this.tooltip.remove();
-    delete FCTooltip.instances[this.eventInfo._instance.instanceId];
+    delete FCTooltip.TOOLTIP_INSTANCES[this.eventInfo._instance.instanceId];
   };
 
-  createTooltip = () => {
-    const tooltip = document.createElement("div");
-    tooltip.className = "fc-tooltip";
+  update = () => {
+    // Get tooltip elements
+    const titleBox = this.tooltip.querySelector(".fc-tooltip__title-box");
+    const colorDot = titleBox.querySelector(".fc-daygrid-event-dot");
+    const title = titleBox.querySelector("span");
+    const body = this.tooltip.querySelector(".fc-tooltip__body");
 
-    // title
-    const titleBox = document.createElement("div");
-    titleBox.className = "fc-tooltip__title-box";
-
-    const colorDot = document.createElement("i");
-    colorDot.className = "fc-daygrid-event-dot";
-    colorDot.style.borderColor = this.eventInfo.backgroundColor;
-    titleBox.append(colorDot);
-
-    const title = document.createElement("span");
-    title.textContent = this.eventInfo.title;
-    titleBox.appendChild(title);
-
-    tooltip.appendChild(titleBox);
-
-    // tooltip body
-    const body = document.createElement("div");
-    body.className = "fc-tooltip__body";
-
+    // Prepare tooltip content
     const eventType = this.eventInfo.extendedProps.type;
     const eventProposal = this.eventInfo.extendedProps.proposal;
     const eventInstrument = this.eventInfo.extendedProps.instrument;
@@ -81,6 +67,9 @@ class FCTooltip {
       FCTooltip.DATE_FORMAT
     );
 
+    // Update tooltip content
+    colorDot.style.borderColor = this.eventInfo.backgroundColor;
+    title.textContent = this.eventInfo.title;
     body.innerHTML = `
       <b>Type:</b> ${eventType}<br>
       ${eventProposal ? `<b>Proposal:</b> ${eventProposal}<br>` : ""}
@@ -88,11 +77,35 @@ class FCTooltip {
       <b>From:</b> ${startDate}<br>
       <b>To:</b> ${endDate}
     `;
+  };
+
+  createTooltip = () => {
+    const tooltip = document.createElement("div");
+    tooltip.className = "fc-tooltip";
+
+    const titleBox = document.createElement("div");
+    titleBox.className = "fc-tooltip__title-box";
+
+    const colorDot = document.createElement("i");
+    colorDot.className = "fc-daygrid-event-dot";
+    titleBox.append(colorDot);
+
+    const title = document.createElement("span");
+    titleBox.appendChild(title);
+
+    tooltip.appendChild(titleBox);
+
+    // tooltip body
+    const body = document.createElement("div");
+    body.className = "fc-tooltip__body";
     tooltip.appendChild(body);
 
     document.body.appendChild(tooltip);
 
-    return tooltip;
+    this.tooltip = tooltip;
+
+    // First update
+    this.update();
   };
 
   setupTooltipListeners = () => {

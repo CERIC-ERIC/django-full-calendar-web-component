@@ -63,7 +63,21 @@ class CalendarElement extends FullCalendarElement {
           }
         }
       },
+      eventContent: function (info, createElement) {
+        if (!info.isMirror) {
+          const tooltip = FCTooltip.getInstace(info.event);
+          if (tooltip) {
+            // TODO: Update events data before updating the tooltip
+            tooltip.update();
+          }
+        }
+
+        // Return true to use the default renderer for the event
+        return true;
+      },
       editable: true,
+      eventOverlap: false,
+      eventResourceEditable: false,
     };
 
     // Add the Non-Commercial license key
