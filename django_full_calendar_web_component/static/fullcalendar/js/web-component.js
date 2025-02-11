@@ -24,71 +24,26 @@ class CalendarElement extends FullCalendarElement {
 
   static RESERVED_BG = "#9e9e9e";
 
-  static _getColor(index) {
+  static _getColor = (index) => {
     return CalendarElement.EVENT_COLORS[
       index % CalendarElement.EVENT_COLORS.length
     ];
-  }
+  };
 
-  connectedCallback() {
-    this._handleOptionsStr(this.getAttribute("options"));
-  }
+  // memory event source
+  events = [];
+  resources = [];
+  proposals = [];
 
-  _handleOptionsStr(optionsStr) {
-    if (optionsStr.startsWith("global:")) {
-      this._handleOptions(window[optionsStr.split(":")[1]]);
-    } else {
-      this._handleOptions(optionsStr ? JSON.parse(optionsStr) : null);
-    }
-  }
+  getEvents = (_fetchInfo, successCallback) => {
+    successCallback(this.events);
+  };
 
-  _optionsToFullCalendar(options) {
-    const newOptions = {
-      initialView: options.initialView,
-      views: options.views,
-      headerToolbar: options.headerToolbar,
-      nowIndicator: true,
-      slotDuration: options.slotDuration,
-      themeSystem: "bootstrap5",
-      eventDidMount: (info) => {
-        if (!info.isMirror) {
-          new FCTooltip(info.el, info.event);
-        }
-      },
-      eventWillUnmount: (info) => {
-        if (!info.isMirror) {
-          const tooltip = FCTooltip.getInstace(info.event);
-          if (tooltip) {
-            tooltip.dispose();
-          }
-        }
-      },
-      eventContent: function (info, createElement) {
-        if (!info.isMirror) {
-          const tooltip = FCTooltip.getInstace(info.event);
-          if (tooltip) {
-            // TODO: Update events data before updating the tooltip
-            tooltip.update();
-          }
-        }
+  getResources = (_fetchInfo, successCallback) => {
+    successCallback(this.resources);
+  };
 
-        // Return true to use the default renderer for the event
-        return true;
-      },
-      editable: true,
-      eventOverlap: false,
-      eventResourceEditable: false,
-    };
-
-    // Add the Non-Commercial license key
-    newOptions.schedulerLicenseKey =
-      "CC-Attribution-NonCommercial-NoDerivatives";
-
-    // create resources and events
-    const proposals = [];
-    const resources = [];
-    const events = [];
-
+  updateEventSource = (options) => {
     if (options.events?.length) {
       options.events.forEach((event) => {
         const newEvent = {
@@ -104,11 +59,13 @@ class CalendarElement extends FullCalendarElement {
             instrument: event.instrument,
           };
           const instrumentTitle = event.instrument;
-          let resource = resources.find((r) => r.title === instrumentTitle);
+          let resource = this.resources.find(
+            (r) => r.title === instrumentTitle
+          );
 
           if (!resource) {
-            resource = { id: resources.length, title: instrumentTitle };
-            resources.push(resource);
+            resource = { id: this.resources.length, title: instrumentTitle };
+            this.resources.push(resource);
           }
           newEvent.resourceId = resource.id;
         }
@@ -120,11 +77,11 @@ class CalendarElement extends FullCalendarElement {
             proposal: event.proposal,
           };
           const proposalTitle = event.proposal;
-          let proposal = proposals.find((p) => p.title === proposalTitle);
+          let proposal = this.proposals.find((p) => p.title === proposalTitle);
 
           if (!proposal) {
-            proposal = { id: proposals.length, title: proposalTitle };
-            proposals.push(proposal);
+            proposal = { id: this.proposals.length, title: proposalTitle };
+            this.proposals.push(proposal);
           }
 
           newEvent.title = proposal.title;
@@ -153,20 +110,82 @@ class CalendarElement extends FullCalendarElement {
             : event.title;
         }
 
-        events.push(newEvent);
+        this.events.push(newEvent);
       });
     }
+  };
 
-    newOptions.resources = resources;
-    newOptions.events = events;
+  updateEvent = (event) => {
+    const eventIndex = this.events.findIndex((e) => e.id === event.id);
+    if (eventIndex !== -1) {
+      this.events[eventIndex] = {
+        ...this.events[eventIndex],
+        start: event.startStr,
+        end: event.endStr,
+      };
+      const tooltip = FCTooltip.getInstace(event);
+      if (tooltip) {
+        tooltip.update(event);
+      }
+    }
+  };
+
+  connectedCallback = () => {
+    this._handleOptionsStr(this.getAttribute("options"));
+  };
+
+  _handleOptionsStr = (optionsStr) => {
+    if (optionsStr.startsWith("global:")) {
+      this._handleOptions(window[optionsStr.split(":")[1]]);
+    } else {
+      this._handleOptions(optionsStr ? JSON.parse(optionsStr) : null);
+    }
+  };
+
+  _optionsToFullCalendar = (options) => {
+    const newOptions = {
+      initialView: options.initialView,
+      views: options.views,
+      headerToolbar: options.headerToolbar,
+      nowIndicator: true,
+      slotDuration: options.slotDuration,
+      themeSystem: "bootstrap5",
+      eventDidMount: (info) => {
+        if (!info.isMirror) {
+          new FCTooltip(info.el, info.event);
+        }
+      },
+      eventWillUnmount: (info) => {
+        if (!info.isMirror) {
+          const tooltip = FCTooltip.getInstace(info.event);
+          if (tooltip) {
+            tooltip.dispose();
+          }
+        }
+      },
+      eventChange: (changeInfo) => {
+        this.updateEvent(changeInfo.event);
+      },
+      editable: true,
+      eventOverlap: false,
+      eventResourceEditable: false,
+    };
+
+    // Add the Non-Commercial license key
+    newOptions.schedulerLicenseKey =
+      "CC-Attribution-NonCommercial-NoDerivatives";
+
+    newOptions.resources = this.getResources;
+    newOptions.events = this.getEvents;
 
     return newOptions;
-  }
+  };
 
-  _handleOptions(options) {
+  _handleOptions = (options) => {
     const fullCalendarOptions = this._optionsToFullCalendar(options);
+    this.updateEventSource(options);
     return super._handleOptions(fullCalendarOptions);
-  }
+  };
 }
 
 customElements.define("calendar-element", CalendarElement);

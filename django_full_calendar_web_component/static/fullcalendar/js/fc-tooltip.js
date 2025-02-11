@@ -29,9 +29,8 @@ class FCTooltip {
     const instanceId = eventInfo._instance.instanceId;
 
     this.eventElem = el;
-    this.eventInfo = eventInfo;
 
-    this.createTooltip();
+    this.createTooltip(eventInfo);
 
     this.setupTooltipListeners();
 
@@ -45,7 +44,8 @@ class FCTooltip {
     delete FCTooltip.TOOLTIP_INSTANCES[this.eventInfo._instance.instanceId];
   };
 
-  update = () => {
+  update = (eventInfo) => {
+    this.eventInfo = eventInfo;
     // Get tooltip elements
     const titleBox = this.tooltip.querySelector(".fc-tooltip__title-box");
     const colorDot = titleBox.querySelector(".fc-daygrid-event-dot");
@@ -79,7 +79,7 @@ class FCTooltip {
     `;
   };
 
-  createTooltip = () => {
+  createTooltip = (eventInfo) => {
     const tooltip = document.createElement("div");
     tooltip.className = "fc-tooltip";
 
@@ -105,7 +105,7 @@ class FCTooltip {
     this.tooltip = tooltip;
 
     // First update
-    this.update();
+    this.update(eventInfo);
   };
 
   setupTooltipListeners = () => {
