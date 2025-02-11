@@ -1,8 +1,4 @@
 class CalendarElement extends FullCalendarElement {
-  constructor() {
-    super(...arguments);
-  }
-
   static EVENT_COLORS = [
     "#2196f3",
     "#009688",
@@ -30,16 +26,28 @@ class CalendarElement extends FullCalendarElement {
     ];
   };
 
-  // memory event source
+  connectedCallback() {
+    super.connectedCallback();
+    // Init the django field
+    const inputName = this.getAttribute("name");
+    if (inputName) {
+      this.input = document.createElement("input");
+      this.input.type = "hidden";
+      this.input.name = inputName;
+      this.appendChild(this.input);
+    }
+  }
+
+  // fast access data in memory
   events = [];
   resources = [];
   proposals = [];
 
-  getEvents = (_fetchInfo, successCallback) => {
+  eventSource = (_fetchInfo, successCallback) => {
     successCallback(this.events);
   };
 
-  getResources = (_fetchInfo, successCallback) => {
+  resourceSource = (_fetchInfo, successCallback) => {
     successCallback(this.resources);
   };
 
@@ -130,60 +138,83 @@ class CalendarElement extends FullCalendarElement {
     }
   };
 
-  connectedCallback = () => {
-    this._handleOptionsStr(this.getAttribute("options"));
+  handleEventMount = (info) => {
+    new FCTooltip(info.el, info.event);
   };
 
-  _handleOptionsStr = (optionsStr) => {
-    if (optionsStr.startsWith("global:")) {
-      this._handleOptions(window[optionsStr.split(":")[1]]);
-    } else {
-      this._handleOptions(optionsStr ? JSON.parse(optionsStr) : null);
+  handleEventUnmount = (info) => {
+    FCTooltip.getInstace(info.event)?.dispose();
+  };
+
+  handleEventUpdate = (changeInfo) => {
+    const eventIndex = this.events.findIndex(
+      (e) => e.id === changeInfo.event.id
+    );
+    if (eventIndex !== -1) {
+      // Update event in memory
+      this.events[eventIndex] = {
+        ...this.events[eventIndex],
+        start: changeInfo.event.startStr,
+        end: changeInfo.event.endStr,
+      };
+
+      // Update tooltip info
+      FCTooltip.getInstace(changeInfo.event)?.update(changeInfo.event);
+
+      // Update django input value
     }
   };
 
   _optionsToFullCalendar = (options) => {
-    const newOptions = {
-      initialView: options.initialView,
-      views: options.views,
-      headerToolbar: options.headerToolbar,
-      nowIndicator: true,
-      slotDuration: options.slotDuration,
-      themeSystem: "bootstrap5",
+    return {
+      // === License key ===
+      schedulerLicenseKey: "CC-Attribution-NonCommercial-NoDerivatives",
+
+      // === Event/Resource sources ===
+      events: this.eventSource,
+      resources: this.resourceSource,
+
+      // === Event handlers ===
       eventDidMount: (info) => {
+        // We want to ignore the mirror events
         if (!info.isMirror) {
-          new FCTooltip(info.el, info.event);
+          this.handleEventMount(info);
         }
       },
       eventWillUnmount: (info) => {
+        // We want to ignore the mirror events
         if (!info.isMirror) {
-          const tooltip = FCTooltip.getInstace(info.event);
-          if (tooltip) {
-            tooltip.dispose();
-          }
+          this.handleEventMount(info);
         }
       },
-      eventChange: (changeInfo) => {
-        this.updateEvent(changeInfo.event);
-      },
-      editable: true,
+      eventChange: this.handleEventUpdate,
+
+      // === Display options ===
+      initialView: options.initialView,
+      views: options.views,
+      headerToolbar: options.headerToolbar,
+      slotDuration: options.slotDuration,
+      themeSystem: "bootstrap5",
+      nowIndicator: true,
+
+      // === Editing options ===
+      editable: !options.readOnly,
       eventOverlap: false,
       eventResourceEditable: false,
     };
-
-    // Add the Non-Commercial license key
-    newOptions.schedulerLicenseKey =
-      "CC-Attribution-NonCommercial-NoDerivatives";
-
-    newOptions.resources = this.getResources;
-    newOptions.events = this.getEvents;
-
-    return newOptions;
   };
 
   _handleOptions = (options) => {
+    // Parse pms-calendar options and convert them to fullcalendar options
     const fullCalendarOptions = this._optionsToFullCalendar(options);
+
+    // Update the event source
     this.updateEventSource(options);
+
+    // Force the shadow attribute to be false
+    this.removeAttribute("shadow");
+
+    // Call the parent method
     return super._handleOptions(fullCalendarOptions);
   };
 }
