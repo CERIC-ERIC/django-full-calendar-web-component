@@ -25,6 +25,12 @@ class FCTooltip {
     }
   };
 
+  static disposeAll = () => {
+    Object.values(FCTooltip.TOOLTIP_INSTANCES).forEach((tooltip) =>
+      tooltip.dispose()
+    );
+  };
+
   constructor(el, eventInfo) {
     const instanceId = eventInfo._instance.instanceId;
 

@@ -1,4 +1,4 @@
-class CalendarElement extends FullCalendarElement {
+class CalendarElement extends HTMLElement {
   static EVENT_COLORS = [
     "#2196f3",
     "#009688",
@@ -20,40 +20,52 @@ class CalendarElement extends FullCalendarElement {
 
   static RESERVED_BG = "#9e9e9e";
 
-  static _getColor = (index) => {
+  static getEventColor = (colorIndex) => {
     return CalendarElement.EVENT_COLORS[
-      index % CalendarElement.EVENT_COLORS.length
+      colorIndex % CalendarElement.EVENT_COLORS.length
     ];
   };
 
-  connectedCallback() {
-    super.connectedCallback();
-    // Init the django field
-    const inputName = this.getAttribute("name");
-    if (inputName) {
-      this.input = document.createElement("input");
-      this.input.type = "hidden";
-      this.input.name = inputName;
-      this.appendChild(this.input);
-    }
+  constructor() {
+    super(...arguments);
+    this._calendar = null;
+    this._events = [];
+    this._resources = [];
+    this._proposals = [];
   }
 
-  // fast access data in memory
-  events = [];
-  resources = [];
-  proposals = [];
+  /**
+   * Initialize the component
+   */
+  connectedCallback() {
+    this.initEventSource();
+    const fcOptions = this.getFullCalendarOptions();
 
-  eventSource = (_fetchInfo, successCallback) => {
-    successCallback(this.events);
-  };
+    this.innerHTML = "<div></div>";
+    let calendarEl = this.querySelector("div");
+    let calendar = new FullCalendar.Calendar(calendarEl, fcOptions);
+    calendar.render();
+    this._calendar = calendar;
+  }
 
-  resourceSource = (_fetchInfo, successCallback) => {
-    successCallback(this.resources);
-  };
+  /**
+   * Clean up the component
+   */
+  disconnectedCallback() {
+    // destroy the calendar
+    this._calendar.destroy();
+    // dispose all tooltips
+    FCTooltip.disposeAll();
+  }
 
-  updateEventSource = (options) => {
-    if (options.events?.length) {
-      options.events.forEach((event) => {
+  /**
+   * Get the initial value and initialize the event source
+   * TODO: Refactor this method, this is just a demo implementation
+   */
+  initEventSource = () => {
+    const events = JSON.parse(this.getAttribute("initial-value"));
+    if (events?.length) {
+      events.forEach((event) => {
         const newEvent = {
           id: event.id,
           start: event.start,
@@ -67,13 +79,13 @@ class CalendarElement extends FullCalendarElement {
             instrument: event.instrument,
           };
           const instrumentTitle = event.instrument;
-          let resource = this.resources.find(
+          let resource = this._resources.find(
             (r) => r.title === instrumentTitle
           );
 
           if (!resource) {
-            resource = { id: this.resources.length, title: instrumentTitle };
-            this.resources.push(resource);
+            resource = { id: this._resources.length, title: instrumentTitle };
+            this._resources.push(resource);
           }
           newEvent.resourceId = resource.id;
         }
@@ -85,16 +97,16 @@ class CalendarElement extends FullCalendarElement {
             proposal: event.proposal,
           };
           const proposalTitle = event.proposal;
-          let proposal = this.proposals.find((p) => p.title === proposalTitle);
+          let proposal = this._proposals.find((p) => p.title === proposalTitle);
 
           if (!proposal) {
-            proposal = { id: this.proposals.length, title: proposalTitle };
-            this.proposals.push(proposal);
+            proposal = { id: this._proposals.length, title: proposalTitle };
+            this._proposals.push(proposal);
           }
 
           newEvent.title = proposal.title;
-          newEvent.backgroundColor = CalendarElement._getColor(proposal.id);
-          newEvent.borderColor = CalendarElement._getColor(proposal.id);
+          newEvent.backgroundColor = CalendarElement.getEventColor(proposal.id);
+          newEvent.borderColor = CalendarElement.getEventColor(proposal.id);
         }
 
         if (event.type) {
@@ -118,54 +130,18 @@ class CalendarElement extends FullCalendarElement {
             : event.title;
         }
 
-        this.events.push(newEvent);
+        this._events.push(newEvent);
       });
     }
   };
 
-  updateEvent = (event) => {
-    const eventIndex = this.events.findIndex((e) => e.id === event.id);
-    if (eventIndex !== -1) {
-      this.events[eventIndex] = {
-        ...this.events[eventIndex],
-        start: event.startStr,
-        end: event.endStr,
-      };
-      const tooltip = FCTooltip.getInstace(event);
-      if (tooltip) {
-        tooltip.update(event);
-      }
-    }
-  };
+  /**
+   * Prepare the FullCalendar options based on the attributes
+   */
+  getFullCalendarOptions = () => {
+    const options = JSON.parse(this.getAttribute("options"));
+    const isReadOnly = this.hasAttribute("readonly");
 
-  handleEventMount = (info) => {
-    new FCTooltip(info.el, info.event);
-  };
-
-  handleEventUnmount = (info) => {
-    FCTooltip.getInstace(info.event)?.dispose();
-  };
-
-  handleEventUpdate = (changeInfo) => {
-    const eventIndex = this.events.findIndex(
-      (e) => e.id === changeInfo.event.id
-    );
-    if (eventIndex !== -1) {
-      // Update event in memory
-      this.events[eventIndex] = {
-        ...this.events[eventIndex],
-        start: changeInfo.event.startStr,
-        end: changeInfo.event.endStr,
-      };
-
-      // Update tooltip info
-      FCTooltip.getInstace(changeInfo.event)?.update(changeInfo.event);
-
-      // Update django input value
-    }
-  };
-
-  _optionsToFullCalendar = (options) => {
     return {
       // === License key ===
       schedulerLicenseKey: "CC-Attribution-NonCommercial-NoDerivatives",
@@ -175,19 +151,9 @@ class CalendarElement extends FullCalendarElement {
       resources: this.resourceSource,
 
       // === Event handlers ===
-      eventDidMount: (info) => {
-        // We want to ignore the mirror events
-        if (!info.isMirror) {
-          this.handleEventMount(info);
-        }
-      },
-      eventWillUnmount: (info) => {
-        // We want to ignore the mirror events
-        if (!info.isMirror) {
-          this.handleEventMount(info);
-        }
-      },
-      eventChange: this.handleEventUpdate,
+      eventDidMount: this.handleEventDidMount,
+      eventWillUnmount: this.handleEventWillUnmount,
+      eventChange: this.handleEventChange,
 
       // === Display options ===
       initialView: options.initialView,
@@ -198,24 +164,50 @@ class CalendarElement extends FullCalendarElement {
       nowIndicator: true,
 
       // === Editing options ===
-      editable: !options.readOnly,
+      editable: !isReadOnly,
       eventOverlap: false,
       eventResourceEditable: false,
     };
   };
 
-  _handleOptions = (options) => {
-    // Parse pms-calendar options and convert them to fullcalendar options
-    const fullCalendarOptions = this._optionsToFullCalendar(options);
+  eventSource = (_fetchInfo, successCallback) => {
+    successCallback(this._events);
+  };
 
-    // Update the event source
-    this.updateEventSource(options);
+  resourceSource = (_fetchInfo, successCallback) => {
+    successCallback(this._resources);
+  };
 
-    // Force the shadow attribute to be false
-    this.removeAttribute("shadow");
+  handleEventDidMount = (info) => {
+    // only handle tooltips for non-mirror events
+    if (!info.isMirror) {
+      new FCTooltip(info.el, info.event);
+    }
+  };
 
-    // Call the parent method
-    return super._handleOptions(fullCalendarOptions);
+  handleEventWillUnmount = (info) => {
+    // only handle tooltips for non-mirror events
+    if (!info.isMirror) {
+      FCTooltip.getInstace(info.event)?.dispose();
+    }
+  };
+
+  handleEventChange = (changeInfo) => {
+    const eventIndex = this._events.findIndex(
+      (e) => e.id === changeInfo.event.id
+    );
+    if (eventIndex !== -1) {
+      // Update event source
+      // TODO: Add support for other event properties update
+      this._events[eventIndex] = {
+        ...this._events[eventIndex],
+        start: changeInfo.event.startStr,
+        end: changeInfo.event.endStr,
+      };
+
+      // Update tooltip info if needed
+      FCTooltip.getInstace(changeInfo.event)?.update(changeInfo.event);
+    }
   };
 }
 
