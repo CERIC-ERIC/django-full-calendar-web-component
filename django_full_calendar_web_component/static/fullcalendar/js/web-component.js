@@ -144,7 +144,7 @@ class CalendarElement extends HTMLElement {
 
     return {
       // === License key ===
-      schedulerLicenseKey: "CC-Attribution-NonCommercial-NoDerivatives",
+      schedulerLicenseKey: window.__FC_LICENSE_KEY, // Don't modify this line, check the README for more information
 
       // === Event/Resource sources ===
       events: this.eventSource,

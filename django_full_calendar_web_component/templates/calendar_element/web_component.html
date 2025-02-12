@@ -1,4 +1,4 @@
-{% load static %}
+{% load static fc_license %}
 
 {% if debug %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.15/index.global.js"></script>
@@ -7,6 +7,13 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/web-component@6.1.15/index.global.min.js"></script>
 {% endif %}
+{% get_fc_license as fc_license_key %}
+{% if fc_license_key %}
+<script>
+    window.__FC_LICENSE_KEY = "{{ fc_license_key }}";
+</script>
+{% endif %}
+
 <script src="{% static "fullcalendar/js/fc-tooltip.js" %}"></script>
 <script src="{% static "fullcalendar/js/web-component.js" %}"></script>
 <link rel="stylesheet" href="{% static "fullcalendar/css/theme.css" %}" />
