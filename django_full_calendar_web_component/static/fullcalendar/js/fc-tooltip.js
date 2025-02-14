@@ -2,6 +2,7 @@ class FCTooltip {
   static TOOLTIP_MARGIN = 4;
   static TOOLTIP_WINDOW_MARGIN = 16;
   static TOOLTIP_INSTANCES = {};
+  static TRANSITION_DURATION = 100; // ms
 
   static DATE_FORMAT = {
     month: "numeric",
@@ -44,8 +45,8 @@ class FCTooltip {
   }
 
   dispose = () => {
-    this.eventElem.removeEventListener("mouseenter", this.mouseEnterHandler);
-    this.eventElem.removeEventListener("mouseleave", this.mouseLeaveHandler);
+    this.eventElem.removeEventListener("mouseenter", this.handleEventClick);
+    this.eventElem.removeEventListener("mouseleave", this.handleClickOutside);
     this.tooltip.remove();
     delete FCTooltip.TOOLTIP_INSTANCES[this.eventInfo._instance.instanceId];
   };
@@ -115,20 +116,31 @@ class FCTooltip {
   };
 
   setupTooltipListeners = () => {
-    this.eventElem.addEventListener("mouseenter", this.mouseEnterHandler);
-    this.eventElem.addEventListener("mouseleave", this.mouseLeaveHandler);
+    this.eventElem.addEventListener("click", this.handleEventClick);
   };
 
   getTooltipPosition = (event) => {
-    const rect = this.eventElem.getBoundingClientRect();
+    // position the tooltip relative to the sticky title
+    const eventTitle = this.eventElem.querySelector(".fc-sticky");
 
-    const posX = Math.round(event.clientX - this.tooltip.offsetWidth / 2);
-    const posY = rect.top + rect.height + FCTooltip.TOOLTIP_MARGIN;
+    const rect = eventTitle.getBoundingClientRect();
+
+    const posX =
+      rect.left -
+      this.tooltip.offsetWidth -
+      FCTooltip.TOOLTIP_MARGIN +
+      window.scrollX;
+    const posY =
+      rect.top +
+      rect.height / 2 -
+      this.tooltip.offsetHeight / 2 +
+      window.scrollY;
 
     // keep the tooltip inside the window with 10px margin
     const fixedPosX = Math.min(
-      Math.max(10, posX),
-      window.innerWidth -
+      Math.max(10 + window.scrollX, posX),
+      window.innerWidth +
+        window.scrollX -
         this.tooltip.offsetWidth / 2 -
         FCTooltip.TOOLTIP_WINDOW_MARGIN
     );
@@ -140,28 +152,69 @@ class FCTooltip {
       window.innerHeight + window.scrollY
     ) {
       fixedPosY =
-        rect.top -
-        this.tooltip.offsetHeight +
-        window.scrollY -
-        FCTooltip.TOOLTIP_MARGIN;
+        window.scrollY +
+        window.innerHeight -
+        this.tooltip.offsetHeight -
+        FCTooltip.TOOLTIP_WINDOW_MARGIN;
+    }
+
+    // Check if the tooltip will go out of the window at the top
+
+    if (posY < window.scrollY + FCTooltip.TOOLTIP_WINDOW_MARGIN) {
+      fixedPosY = window.scrollY + FCTooltip.TOOLTIP_WINDOW_MARGIN;
     }
 
     return { x: fixedPosX, y: fixedPosY };
   };
 
-  mouseEnterHandler = (event) => {
-    // if mouse is down return
-    if (event.buttons > 0) {
-      return;
-    }
-
-    const tooltipPosition = this.getTooltipPosition(event);
-    this.tooltip.style.left = `${tooltipPosition.x}px`;
-    this.tooltip.style.top = `${tooltipPosition.y}px`;
+  showTooltip = (posX, posY) => {
+    this.tooltip.style.left = `${posX}px`;
+    this.tooltip.style.top = `${posY}px`;
     this.tooltip.classList.add("fc-tooltip--show");
   };
 
-  mouseLeaveHandler = () => {
+  hideTooltip = () => {
     this.tooltip.classList.remove("fc-tooltip--show");
+    this.removeListeners();
+    window.setTimeout(() => {
+      this.tooltip.removeAttribute("style");
+    }, FCTooltip.TRANSITION_DURATION);
+  };
+
+  handleEventClick = (event) => {
+    const tooltipPosition = this.getTooltipPosition(event);
+    this.showTooltip(tooltipPosition.x, tooltipPosition.y);
+
+    // prevent add duplicate listeners
+    this.removeListeners();
+
+    // Hide tooltip when clicking outside
+    document.addEventListener("mousedown", this.handleClickOutside);
+    // Hide tooltip when scrolling
+    window.addEventListener("scroll", this.handleScroll, true);
+    // Hide tooltip when resizing
+    window.addEventListener("resize", this.handleResize, true);
+  };
+
+  handleClickOutside = (event) => {
+    if (!this.tooltip.contains(event.target)) {
+      this.hideTooltip();
+    } else {
+      event.stopPropagation();
+    }
+  };
+
+  handleScroll = () => {
+    this.hideTooltip();
+  };
+
+  handleResize = () => {
+    this.hideTooltip();
+  };
+
+  removeListeners = () => {
+    document.removeEventListener("mousedown", this.handleClickOutside);
+    window.removeEventListener("scroll", this.handleScroll, true);
+    window.removeEventListener("resize", this.handleResize, true);
   };
 }
