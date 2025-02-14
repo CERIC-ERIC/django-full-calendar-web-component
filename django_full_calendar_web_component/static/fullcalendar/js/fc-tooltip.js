@@ -38,7 +38,6 @@ class FCTooltip {
     this.eventElem = el;
 
     this.createTooltip(eventInfo);
-
     this.setupTooltipListeners();
 
     FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;

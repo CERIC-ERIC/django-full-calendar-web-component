@@ -71,6 +71,7 @@ class CalendarElement extends HTMLElement {
           start: event.start,
           end: event.end,
           extendedProps: {},
+          classNames: ["fc-event-clickable"],
         };
         // Instruments are mapped to resources
         if (event.instrument) {

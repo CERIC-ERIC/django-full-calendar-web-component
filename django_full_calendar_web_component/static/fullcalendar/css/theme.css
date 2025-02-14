@@ -59,3 +59,8 @@
   background-color: white;
   padding: 4px 8px;
 }
+
+
+.fc-event-clickable {
+  cursor: pointer;
+}
