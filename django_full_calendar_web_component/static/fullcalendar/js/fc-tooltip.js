@@ -120,7 +120,7 @@ class FCTooltip {
 
   getTooltipPosition = (event) => {
     // position the tooltip relative to the sticky title
-    const eventTitle = this.eventElem.querySelector(".fc-sticky");
+    const eventTitle = this.eventElem.querySelector(".fc-sticky") || this.eventElem;
 
     const rect = eventTitle.getBoundingClientRect();
 
