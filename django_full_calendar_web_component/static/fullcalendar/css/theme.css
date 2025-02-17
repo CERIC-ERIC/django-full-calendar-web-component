@@ -44,23 +44,24 @@
 
 .fc-tooltip__title-box {
   display: flex;
-  flex: 0 0 auto;
-  background-color: #eeeeee;
+  background-color: #fafafa;
   color: black;
-  border-bottom: 1px solid #cccccc;
+  box-shadow: 0px 1px 0px 0px #dddddd;
   padding: 0 4px 0 8px;
   overflow: hidden;
+  position: relative;
 }
 
 .fc-tooltip__title-box .fc-daygrid-event-dot {
-  margin-top: 14px;
+  margin-top: 16px;
+  margin-right: 8px;
 }
 
 .fc-tooltip__title {
   flex: 1 1 auto;
   font-weight: bold;
   max-width: 200px;
-  margin: 8px 0;
+  margin: 10px 0;
 }
 
 .fc-tooltip__action-button {
@@ -74,7 +75,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 4px 0;
+  margin: 5px 0 0 0;
 }
 
 .fc-tooltip__action-button:hover {
@@ -93,7 +94,7 @@
 .fc-tooltip__body {
   flex: 1 1 auto;
   background-color: white;
-  padding: 6px 12px;
+  padding: 4px 8px;
 }
 
 .fc-event-clickable {
