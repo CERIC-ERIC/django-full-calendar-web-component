@@ -32,12 +32,12 @@ class FCTooltip {
     );
   };
 
-  constructor(el, eventInfo) {
+  constructor(el, eventInfo, editable) {
     const instanceId = eventInfo._instance.instanceId;
 
     this.eventElem = el;
 
-    this.createTooltip(eventInfo);
+    this.createTooltip(eventInfo, editable);
     this.setupTooltipListeners();
 
     FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;
@@ -50,7 +50,7 @@ class FCTooltip {
     delete FCTooltip.TOOLTIP_INSTANCES[this.eventInfo._instance.instanceId];
   };
 
-  update = (eventInfo) => {
+  update = (eventInfo, editable) => {
     this.eventInfo = eventInfo;
     // Get tooltip elements
     const titleBox = this.tooltip.querySelector(".fc-tooltip__title-box");
@@ -89,6 +89,7 @@ class FCTooltip {
     const tooltip = document.createElement("div");
     tooltip.className = "fc-tooltip";
 
+    // tooltip header
     const titleBox = document.createElement("div");
     titleBox.className = "fc-tooltip__title-box";
 
@@ -97,9 +98,40 @@ class FCTooltip {
     titleBox.append(colorDot);
 
     const title = document.createElement("span");
+    title.className = "fc-tooltip__title";
     titleBox.appendChild(title);
-
     tooltip.appendChild(titleBox);
+
+    // actions
+    const editButton = document.createElement("button");
+    editButton.title = "Edit event";
+    editButton.className = "fc-tooltip__action-button";
+    editButton.innerHTML = "<i class='fas fa-pen'></i>";
+    editButton.addEventListener("click", () => {
+      console.log("edit event");
+    });
+
+    titleBox.appendChild(editButton);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.title = "Delete event";
+    deleteButton.className = "fc-tooltip__action-button";
+    deleteButton.innerHTML = "<i class='fas fa-trash-alt'></i>";
+    deleteButton.addEventListener("click", () => {
+      console.log("delete event");
+    });
+
+    titleBox.appendChild(deleteButton);
+
+    const closeButton = document.createElement("button");
+    closeButton.title = "Close";
+    closeButton.className = "fc-tooltip__action-button";
+    closeButton.innerHTML = "<i class='btn-close'></i>";
+    closeButton.addEventListener("click", () => {
+      this.hideTooltip();
+    });
+
+    titleBox.appendChild(closeButton);
 
     // tooltip body
     const body = document.createElement("div");
@@ -120,7 +152,8 @@ class FCTooltip {
 
   getTooltipPosition = (event) => {
     // position the tooltip relative to the sticky title
-    const eventTitle = this.eventElem.querySelector(".fc-sticky") || this.eventElem;
+    const eventTitle =
+      this.eventElem.querySelector(".fc-sticky") || this.eventElem;
 
     const rect = eventTitle.getBoundingClientRect();
 

@@ -19,7 +19,7 @@
 
 .fc-tooltip {
   min-height: 100px;
-  min-width: 180px;
+  min-width: 260px;
   overflow: hidden;
   position: absolute;
   display: flex;
@@ -44,22 +44,57 @@
 
 .fc-tooltip__title-box {
   display: flex;
-  align-items: center;
   flex: 0 0 auto;
   background-color: #eeeeee;
   color: black;
   border-bottom: 1px solid #cccccc;
-  padding: 4px;
-  white-space: nowrap;
+  padding: 0 4px 0 8px;
   overflow: hidden;
+}
+
+.fc-tooltip__title-box .fc-daygrid-event-dot {
+  margin-top: 14px;
+}
+
+.fc-tooltip__title {
+  flex: 1 1 auto;
+  font-weight: bold;
+  max-width: 200px;
+  margin: 8px 0;
+}
+
+.fc-tooltip__action-button {
+  border: none;
+  background-color: transparent;
+  font-size: 14px;
+  color: black;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.fc-tooltip__action-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.fc-tooltip__action-button i {
+  display: block;
+  opacity: 0.5 !important;
+}
+
+.fc-tooltip__action-button:hover i {
+  opacity: 0.75 !important;
 }
 
 .fc-tooltip__body {
   flex: 1 1 auto;
   background-color: white;
-  padding: 4px 8px;
+  padding: 6px 12px;
 }
-
 
 .fc-event-clickable {
   cursor: pointer;
