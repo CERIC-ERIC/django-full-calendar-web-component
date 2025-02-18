@@ -182,7 +182,7 @@ class CalendarElement extends HTMLElement {
   handleEventDidMount = (info) => {
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
-      new FCTooltip(info.el, info.event);
+      new FCTooltip(info.el, info.event, this.tooltipActions);
     }
   };
 
@@ -194,6 +194,7 @@ class CalendarElement extends HTMLElement {
   };
 
   handleEventChange = (changeInfo) => {
+    console.log("Event changed", changeInfo);
     const eventIndex = this._events.findIndex(
       (e) => e.id === changeInfo.event.id
     );
@@ -208,6 +209,38 @@ class CalendarElement extends HTMLElement {
 
       // Update tooltip info if needed
       FCTooltip.getInstace(changeInfo.event)?.update(changeInfo.event);
+    }
+  };
+
+  tooltipActions = [
+    {
+      label: "Edit event",
+      icon: "edit",
+      callback: (event) => {
+        this.editEvent(event.id);
+      },
+    },
+    {
+      label: "Delete event",
+      icon: "trash-alt",
+      callback: (event) => {
+        this.deleteEvent(event.id);
+      },
+    },
+  ];
+
+  editEvent = (eventId) => {
+    console.log("Edit event", eventId);
+  };
+
+  deleteEvent = (eventId) => {
+    const eventIndex = this._events.findIndex((e) => e.id === eventId);
+    if (
+      eventIndex !== -1 &&
+      confirm("Are you sure you want to delete this event?")
+    ) {
+      this._events.splice(eventIndex, 1);
+      this._calendar.getEventById(eventId).remove();
     }
   };
 }

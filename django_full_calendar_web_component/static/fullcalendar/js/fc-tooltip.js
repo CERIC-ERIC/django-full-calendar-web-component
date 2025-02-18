@@ -32,12 +32,12 @@ class FCTooltip {
     );
   };
 
-  constructor(el, eventInfo, editable) {
+  constructor(el, eventInfo, editable, actions) {
     const instanceId = eventInfo._instance.instanceId;
 
     this.eventElem = el;
 
-    this.createTooltip(eventInfo, editable);
+    this.createTooltip(eventInfo, editable, actions);
     this.setupTooltipListeners();
 
     FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;
@@ -50,7 +50,7 @@ class FCTooltip {
     delete FCTooltip.TOOLTIP_INSTANCES[this.eventInfo._instance.instanceId];
   };
 
-  update = (eventInfo, editable) => {
+  update = (eventInfo) => {
     this.eventInfo = eventInfo;
     // Get tooltip elements
     const titleBox = this.tooltip.querySelector(".fc-tooltip__title-box");
@@ -85,7 +85,7 @@ class FCTooltip {
     `;
   };
 
-  createTooltip = (eventInfo) => {
+  createTooltip = (eventInfo, actions) => {
     const tooltip = document.createElement("div");
     tooltip.className = "fc-tooltip";
 
@@ -103,25 +103,16 @@ class FCTooltip {
     tooltip.appendChild(titleBox);
 
     // actions
-    const editButton = document.createElement("button");
-    editButton.title = "Edit event";
-    editButton.className = "fc-tooltip__action-button";
-    editButton.innerHTML = "<i class='fas fa-pen'></i>";
-    editButton.addEventListener("click", () => {
-      console.log("edit event");
+    actions.forEach((action) => {
+      const actionButton = document.createElement("button");
+      actionButton.title = action.title;
+      actionButton.className = "fc-tooltip__action-button";
+      actionButton.innerHTML = `<i class='fas fa-${action.icon}'></i>`;
+      actionButton.addEventListener("click", () => {
+        action.callback(eventInfo);
+      });
+      titleBox.appendChild(actionButton);
     });
-
-    titleBox.appendChild(editButton);
-
-    const deleteButton = document.createElement("button");
-    deleteButton.title = "Delete event";
-    deleteButton.className = "fc-tooltip__action-button";
-    deleteButton.innerHTML = "<i class='fas fa-trash-alt'></i>";
-    deleteButton.addEventListener("click", () => {
-      console.log("delete event");
-    });
-
-    titleBox.appendChild(deleteButton);
 
     const closeButton = document.createElement("button");
     closeButton.title = "Close";
