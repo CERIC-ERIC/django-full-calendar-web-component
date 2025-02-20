@@ -105,7 +105,7 @@ class FCTooltip {
     // actions
     actions.forEach((action) => {
       const actionButton = document.createElement("button");
-      actionButton.title = action.title;
+      actionButton.title = action.label;
       actionButton.className = "fc-tooltip__action-button";
       actionButton.innerHTML = `<i class='fas fa-${action.icon}'></i>`;
       actionButton.addEventListener("click", () => {
