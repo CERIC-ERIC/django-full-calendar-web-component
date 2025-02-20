@@ -22,6 +22,8 @@
   min-width: 260px;
   overflow: hidden;
   position: absolute;
+  top: -9999px;
+  left: -9999px;
   display: flex;
   flex-direction: column;
   border-radius: 4px;
