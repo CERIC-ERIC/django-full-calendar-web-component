@@ -32,6 +32,7 @@ class CalendarElement extends HTMLElement {
     this._events = [];
     this._resources = [];
     this._proposals = [];
+    this._options = {};
   }
 
   /**
@@ -39,6 +40,7 @@ class CalendarElement extends HTMLElement {
    */
   connectedCallback() {
     this.initEventSource();
+    this._options = JSON.parse(this.getAttribute("options"));
     const fcOptions = this.getFullCalendarOptions();
 
     this.innerHTML = "<div></div>";
@@ -115,7 +117,10 @@ class CalendarElement extends HTMLElement {
             ...newEvent.extendedProps,
             type: event.type,
           };
-          newEvent.classNames = [`event--type-${event.type}`];
+          newEvent.classNames = [
+            ...newEvent.classNames,
+            `event--type-${event.type}`,
+          ];
 
           if (event.type === "reserved") {
             newEvent.backgroundColor = CalendarElement.RESERVED_BG;
@@ -140,7 +145,6 @@ class CalendarElement extends HTMLElement {
    * Prepare the FullCalendar options based on the attributes
    */
   getFullCalendarOptions = () => {
-    const options = JSON.parse(this.getAttribute("options"));
     const isReadOnly = this.hasAttribute("readonly");
 
     return {
@@ -157,15 +161,16 @@ class CalendarElement extends HTMLElement {
       eventChange: this.handleEventChange,
 
       // === Display options ===
-      initialView: options.initialView,
-      views: options.views,
-      headerToolbar: options.headerToolbar,
-      slotDuration: options.slotDuration,
+      initialView: this._options.initialView,
+      views: this._options.views,
+      headerToolbar: this._options.headerToolbar,
+      slotDuration: this._options.slotDuration,
       themeSystem: "bootstrap5",
       nowIndicator: true,
+      resourceAreaHeaderContent: "Instruments",
 
       // === Editing options ===
-      editable: !isReadOnly,
+      editable: this._options.hasChangePermission && !isReadOnly,
       eventOverlap: false,
       eventResourceEditable: false,
     };
@@ -182,7 +187,29 @@ class CalendarElement extends HTMLElement {
   handleEventDidMount = (info) => {
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
-      new FCTooltip(info.el, info.event, this.tooltipActions);
+      const tooltipActions = [];
+
+      if (this._options.hasChangePermission) {
+        tooltipActions.push({
+          label: "Edit event",
+          icon: "edit",
+          callback: (event) => {
+            this.editEvent(event.id);
+          },
+        });
+      }
+
+      if (this._options.hasDeletePermission) {
+        tooltipActions.push({
+          label: "Delete event",
+          icon: "trash-alt",
+          callback: (event) => {
+            this.deleteEvent(event.id);
+          },
+        });
+      }
+
+      new FCTooltip(info.el, info.event, tooltipActions);
     }
   };
 
@@ -218,23 +245,6 @@ class CalendarElement extends HTMLElement {
       })
     );
   };
-
-  tooltipActions = [
-    {
-      label: "Edit event",
-      icon: "edit",
-      callback: (event) => {
-        this.editEvent(event.id);
-      },
-    },
-    {
-      label: "Delete event",
-      icon: "trash-alt",
-      callback: (event) => {
-        this.deleteEvent(event.id);
-      },
-    },
-  ];
 
   editEvent = (eventId) => {
     // dispatch a custom event to notify the parent component
