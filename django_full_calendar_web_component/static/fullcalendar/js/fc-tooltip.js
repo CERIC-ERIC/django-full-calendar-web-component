@@ -77,12 +77,13 @@ class FCTooltip {
     colorDot.style.borderColor = this.eventInfo.backgroundColor;
     title.textContent = this.eventInfo.title;
     body.innerHTML = `
-      <b>Type:</b> ${eventType}<br>
-      ${eventProposal ? `<b>Proposal:</b> ${eventProposal}<br>` : ""}
-      ${eventInstrument ? `<b>Instrument:</b> ${eventInstrument}<br>` : ""}
+    <b>Type:</b> ${eventType}<br>
+      ${eventProposal ? `<b>Proposal:</b> ${eventProposal.url ? `<a href="${eventProposal.url}">${eventProposal.name}</a>` : eventProposal.name}<br>` : ""}
+      ${eventInstrument ? `<b>Instrument:</b> ${eventInstrument.url ? `<a href="${eventInstrument.url}">${eventInstrument.name}</a>` : eventInstrument.name}<br>` : ""}
       <b>From:</b> ${startDate}<br>
       <b>To:</b> ${endDate}
     `;
+
   };
 
   createTooltip = (eventInfo, actions) => {

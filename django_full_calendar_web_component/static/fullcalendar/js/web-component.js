@@ -81,13 +81,16 @@ class CalendarElement extends HTMLElement {
             ...newEvent.extendedProps,
             instrument: event.instrument,
           };
-          const instrumentTitle = event.instrument;
+
           let resource = this._resources.find(
-            (r) => r.title === instrumentTitle
+            (r) => r.id === event.instrument.id
           );
 
           if (!resource) {
-            resource = { id: this._resources.length, title: instrumentTitle };
+            resource = {
+              id: event.instrument.id,
+              title: event.instrument.name,
+            };
             this._resources.push(resource);
           }
           newEvent.resourceId = resource.id;
@@ -99,17 +102,23 @@ class CalendarElement extends HTMLElement {
             ...newEvent.extendedProps,
             proposal: event.proposal,
           };
-          const proposalTitle = event.proposal;
-          let proposal = this._proposals.find((p) => p.title === proposalTitle);
+
+          let proposal = this._proposals.find(
+            (p) => p.id === event.proposal.id
+          );
 
           if (!proposal) {
-            proposal = { id: this._proposals.length, title: proposalTitle };
+            proposal = { id: event.proposal.id, title: event.proposal.name };
             this._proposals.push(proposal);
           }
 
+          const proposalIndex = this._proposals.indexOf(proposal);
+          const proposalColor = CalendarElement.getEventColor(proposalIndex);
+
           newEvent.title = proposal.title;
-          newEvent.backgroundColor = CalendarElement.getEventColor(proposal.id);
-          newEvent.borderColor = CalendarElement.getEventColor(proposal.id);
+
+          newEvent.backgroundColor = proposalColor;
+          newEvent.borderColor = proposalColor;
         }
 
         if (event.type) {
