@@ -92,12 +92,12 @@ class CalendarElement extends HTMLElement {
     // destroy the calendar
     this._calendar.destroy();
     // dispose all tooltips
-    FCTooltip.disposeAll();
+    // FCTooltip.disposeAll();
   }
 
   eventToFCEvent = (event) => {
     const newEvent = {
-      id: event.id,
+      id: `${event.id}`,
       start: event.start,
       end: event.end,
       extendedProps: {},
@@ -106,7 +106,7 @@ class CalendarElement extends HTMLElement {
 
     if (event.instrument) {
       // instrument id is used as resourceId
-      newEvent.resourceId = event.instrument;
+      newEvent.resourceId = `${event.instrument}`;
     }
 
     // Proposals sets the color and title
@@ -215,7 +215,6 @@ class CalendarElement extends HTMLElement {
   };
 
   handleEventDidMount = (info) => {
-    console.log("mount");
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
       const tooltipActions = [];
@@ -240,14 +239,14 @@ class CalendarElement extends HTMLElement {
         });
       }
 
-      new FCTooltip(info.el, info.event, this._calendar, tooltipActions);
+      // new FCTooltip(info.el, info.event, this._calendar, tooltipActions);
     }
   };
 
   handleEventWillUnmount = (info) => {
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
-      FCTooltip.getInstace(info.event)?.dispose();
+      // FCTooltip.getInstace(info.event)?.dispose();
     }
   };
 
@@ -258,7 +257,9 @@ class CalendarElement extends HTMLElement {
   handleEventChange = (changeInfo) => {
     // write changes into the attribute
     const events = JSON.parse(this.getAttribute("value"));
-    const eventIndex = events.findIndex((e) => e.id === changeInfo.event.id);
+    const eventIndex = events.findIndex(
+      (e) => `${e.id}` === `${changeInfo.event.id}`
+    );
 
     // only update start and end as ISO strings
     events[eventIndex].start = changeInfo.event.start.toISOString();
@@ -276,7 +277,6 @@ class CalendarElement extends HTMLElement {
   attributeChangedCallback(name) {
     // Update the calendar options
     if (name === "options" && this._calendar) {
-      console.log("cambio options");
       this.handleOptions(this.getAttribute("options"));
     }
 
