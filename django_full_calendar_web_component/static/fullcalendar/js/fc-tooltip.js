@@ -32,12 +32,13 @@ class FCTooltip {
     );
   };
 
-  constructor(el, eventInfo, editable, actions) {
-    const instanceId = eventInfo._instance.instanceId;
+  constructor(el, event, calendarInstance, actions) {
+    const instanceId = event._instance.instanceId;
+    this._calendar = calendarInstance;
 
     this.eventElem = el;
 
-    this.createTooltip(eventInfo, editable, actions);
+    this.createTooltip(event, actions);
     this.setupTooltipListeners();
 
     FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;
@@ -59,9 +60,9 @@ class FCTooltip {
     const body = this.tooltip.querySelector(".fc-tooltip__body");
 
     // Prepare tooltip content
-    const eventType = this.eventInfo.extendedProps.type;
-    const eventProposal = this.eventInfo.extendedProps.proposal;
-    const eventInstrument = this.eventInfo.extendedProps.instrument;
+    const eventType = extraInfo.type;
+    const eventProposal = extraInfo.proposal;
+    const eventInstrument = extraInfo.instrument;
 
     const startDate = FullCalendar.formatDate(
       this.eventInfo.start,
@@ -78,12 +79,27 @@ class FCTooltip {
     title.textContent = this.eventInfo.title;
     body.innerHTML = `
     <b>Type:</b> ${eventType}<br>
-      ${eventProposal ? `<b>Proposal:</b> ${eventProposal.url ? `<a href="${eventProposal.url}">${eventProposal.name}</a>` : eventProposal.name}<br>` : ""}
-      ${eventInstrument ? `<b>Instrument:</b> ${eventInstrument.url ? `<a href="${eventInstrument.url}">${eventInstrument.name}</a>` : eventInstrument.name}<br>` : ""}
+      ${
+        eventProposal
+          ? `<b>Proposal:</b> ${
+              eventProposal.url
+                ? `<a href="${eventProposal.url}">${eventProposal.name}</a>`
+                : eventProposal.name
+            }<br>`
+          : ""
+      }
+      ${
+        eventInstrument
+          ? `<b>Instrument:</b> ${
+              eventInstrument.url
+                ? `<a href="${eventInstrument.url}">${eventInstrument.name}</a>`
+                : eventInstrument.name
+            }<br>`
+          : ""
+      }
       <b>From:</b> ${startDate}<br>
       <b>To:</b> ${endDate}
     `;
-
   };
 
   createTooltip = (eventInfo, actions) => {

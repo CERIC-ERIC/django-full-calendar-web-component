@@ -1,4 +1,13 @@
 class CalendarElement extends HTMLElement {
+  // Define the observed attributes for the field use case
+  static observedAttributes = [
+    "value",
+    "name",
+    "options",
+    "instruments",
+    "proposals",
+  ];
+
   static EVENT_COLORS = [
     "#2196f3",
     "#009688",
@@ -29,25 +38,51 @@ class CalendarElement extends HTMLElement {
   constructor() {
     super(...arguments);
     this._calendar = null;
-    this._events = [];
-    this._resources = [];
+    this._input = null;
     this._proposals = [];
-    this._options = {};
+  }
+
+  refetchProposals = () => {
+    this._proposals = JSON.parse(this.getAttribute("proposals"));
+  };
+
+  /**
+   * Initialize/update the calendar when options change
+   */
+  handleOptions(optionsStr) {
+    this._options = JSON.parse(optionsStr);
+    if (this._calendar) {
+      this._calendar.resetOptions(this._options);
+    } else {
+      const fcOptions = this.getFullCalendarOptions();
+      let calendarEl = document.createElement("div");
+      this.appendChild(calendarEl);
+      let calendar = new FullCalendar.Calendar(calendarEl, fcOptions);
+      calendar.render();
+      this._calendar = calendar;
+    }
+  }
+
+  handleValue(value, name) {
+    if (!this._input) {
+      this._input = document.createElement("input");
+      this._input.type = "hidden";
+      this._input.name = name;
+      // This input is only intended to send the value to the server
+      this._input.readOnly = true;
+      this.appendChild(this._input);
+    }
+    this._input.name = name;
+    this._input.value = value;
   }
 
   /**
    * Initialize the component
    */
   connectedCallback() {
-    this.initEventSource();
-    this._options = JSON.parse(this.getAttribute("options"));
-    const fcOptions = this.getFullCalendarOptions();
-
-    this.innerHTML = "<div></div>";
-    let calendarEl = this.querySelector("div");
-    let calendar = new FullCalendar.Calendar(calendarEl, fcOptions);
-    calendar.render();
-    this._calendar = calendar;
+    this.refetchProposals();
+    this.handleOptions(this.getAttribute("options"));
+    this.handleValue(this.getAttribute("value"), this.getAttribute("name"));
   }
 
   /**
@@ -60,94 +95,63 @@ class CalendarElement extends HTMLElement {
     FCTooltip.disposeAll();
   }
 
-  /**
-   * Get the initial value and initialize the event source
-   * TODO: Refactor this method, this is just a demo implementation
-   */
-  initEventSource = () => {
-    const events = JSON.parse(this.getAttribute("initial-value"));
-    if (events?.length) {
-      events.forEach((event) => {
-        const newEvent = {
-          id: event.id,
-          start: event.start,
-          end: event.end,
-          extendedProps: {},
-          classNames: ["fc-event-clickable"],
-        };
-        // Instruments are mapped to resources
-        if (event.instrument) {
-          newEvent.extendedProps = {
-            ...newEvent.extendedProps,
-            instrument: event.instrument,
-          };
+  eventToFCEvent = (event) => {
+    const newEvent = {
+      id: event.id,
+      start: event.start,
+      end: event.end,
+      extendedProps: {},
+      classNames: ["fc-event-clickable"],
+    };
 
-          let resource = this._resources.find(
-            (r) => r.id === event.instrument.id
-          );
-
-          if (!resource) {
-            resource = {
-              id: event.instrument.id,
-              title: event.instrument.name,
-            };
-            this._resources.push(resource);
-          }
-          newEvent.resourceId = resource.id;
-        }
-
-        // Proposals sets the color and title
-        if (event.proposal) {
-          newEvent.extendedProps = {
-            ...newEvent.extendedProps,
-            proposal: event.proposal,
-          };
-
-          let proposal = this._proposals.find(
-            (p) => p.id === event.proposal.id
-          );
-
-          if (!proposal) {
-            proposal = { id: event.proposal.id, title: event.proposal.name };
-            this._proposals.push(proposal);
-          }
-
-          const proposalIndex = this._proposals.indexOf(proposal);
-          const proposalColor = CalendarElement.getEventColor(proposalIndex);
-
-          newEvent.title = proposal.title;
-
-          newEvent.backgroundColor = proposalColor;
-          newEvent.borderColor = proposalColor;
-        }
-
-        if (event.type) {
-          newEvent.extendedProps = {
-            ...newEvent.extendedProps,
-            type: event.type,
-          };
-          newEvent.classNames = [
-            ...newEvent.classNames,
-            `event--type-${event.type}`,
-          ];
-
-          if (event.type === "reserved") {
-            newEvent.backgroundColor = CalendarElement.RESERVED_BG;
-            newEvent.borderColor = CalendarElement.RESERVED_BG;
-            newEvent.title = "Reserved";
-          }
-        }
-
-        // Concat event title
-        if (event.title) {
-          newEvent.title = newEvent.title
-            ? `${newEvent.title}: ${event.title}`
-            : event.title;
-        }
-
-        this._events.push(newEvent);
-      });
+    if (event.instrument) {
+      // instrument id is used as resourceId
+      newEvent.resourceId = event.instrument;
     }
+
+    // Proposals sets the color and title
+    if (event.proposal) {
+      newEvent.extendedProps = {
+        ...newEvent.extendedProps,
+        proposal: event.proposal,
+      };
+      const proposal = this._proposals.find((p) => p.id === event.proposal);
+
+      const proposalIndex = this._proposals.indexOf(proposal);
+
+      const proposalColor = CalendarElement.getEventColor(proposalIndex);
+
+      newEvent.title = proposal.title;
+
+      newEvent.backgroundColor = proposalColor;
+      newEvent.borderColor = proposalColor;
+    }
+
+    if (event.type) {
+      newEvent.extendedProps = {
+        ...newEvent.extendedProps,
+        type: event.type,
+      };
+      newEvent.classNames = [
+        ...newEvent.classNames,
+        `event--type-${event.type}`,
+      ];
+
+      if (event.type === "reserved") {
+        newEvent.backgroundColor = CalendarElement.RESERVED_BG;
+        newEvent.borderColor = CalendarElement.RESERVED_BG;
+        newEvent.title = "Reserved";
+      }
+    }
+
+    // Concat event title
+    if (event.title) {
+      newEvent.title = newEvent.title
+        ? `${newEvent.title}: ${event.title}`
+        : event.title;
+    }
+
+    return newEvent;
   };
 
   /**
@@ -177,6 +181,8 @@ class CalendarElement extends HTMLElement {
       themeSystem: "bootstrap5",
       nowIndicator: true,
       resourceAreaHeaderContent: "Instruments",
+      resourceAreaWidth: "200px",
+      filterResourcesWithEvents: true,
 
       // === Editing options ===
       editable: this._options.hasChangePermission && !isReadOnly,
@@ -185,15 +191,31 @@ class CalendarElement extends HTMLElement {
     };
   };
 
-  eventSource = (_fetchInfo, successCallback) => {
-    successCallback(this._events);
+  /**
+   * Event sources to get the events from the value attribute
+   */
+  eventSource = (_fetchInfo, successCallback, failureCallback) => {
+    try {
+      const events = JSON.parse(this.getAttribute("value"));
+      const fcEvents = events.map(this.eventToFCEvent);
+      successCallback(fcEvents);
+    } catch (error) {
+      failureCallback(error);
+    }
   };
 
   resourceSource = (_fetchInfo, successCallback) => {
-    successCallback(this._resources);
+    try {
+      // create resources from the instruments
+      const instruments = JSON.parse(this.getAttribute("instruments"));
+      successCallback(instruments);
+    } catch (error) {
+      failureCallback(error);
+    }
   };
 
   handleEventDidMount = (info) => {
+    console.log("mount");
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
       const tooltipActions = [];
@@ -218,7 +240,7 @@ class CalendarElement extends HTMLElement {
         });
       }
 
-      new FCTooltip(info.el, info.event, tooltipActions);
+      new FCTooltip(info.el, info.event, this._calendar, tooltipActions);
     }
   };
 
@@ -229,66 +251,55 @@ class CalendarElement extends HTMLElement {
     }
   };
 
+  editEvent = (eventId) => {};
+
+  deleteEvent = (eventId) => {};
+
   handleEventChange = (changeInfo) => {
-    const eventIndex = this._events.findIndex(
-      (e) => e.id === changeInfo.event.id
-    );
-    if (eventIndex !== -1) {
-      // Update event source
-      // TODO: Add support for other event properties update
-      this._events[eventIndex] = {
-        ...this._events[eventIndex],
-        start: changeInfo.event.startStr,
-        end: changeInfo.event.endStr,
-      };
+    // write changes into the attribute
+    const events = JSON.parse(this.getAttribute("value"));
+    const eventIndex = events.findIndex((e) => e.id === changeInfo.event.id);
 
-      // Update tooltip info if needed
-      FCTooltip.getInstace(changeInfo.event)?.update(changeInfo.event);
+    // only update start and end as ISO strings
+    events[eventIndex].start = changeInfo.event.start.toISOString();
+    events[eventIndex].end = changeInfo.event.end.toISOString();
+
+    this.setAttribute("value", JSON.stringify(events));
+  };
+
+  addEvent = (event) => {
+    const events = JSON.parse(this.getAttribute("value"));
+    events.push(event);
+    this.setAttribute("value", JSON.stringify(events));
+  };
+
+  attributeChangedCallback(name) {
+    // Update the calendar options
+    if (name === "options" && this._calendar) {
+      console.log("cambio options");
+      this.handleOptions(this.getAttribute("options"));
     }
-    this.dispatchEvent(
-      new CustomEvent("change-event", {
-        detail: {
-          changeInfo,
-        },
-        bubbles: true,
-      })
-    );
-  };
 
-  editEvent = (eventId) => {
-    // dispatch a custom event to notify the parent component
-    this.dispatchEvent(
-      new CustomEvent("edit-event", {
-        detail: {
-          eventId,
-        },
-        bubbles: true,
-      })
-    );
-  };
-
-  deleteEvent = (eventId) => {
-    const eventIndex = this._events.findIndex(
-      (e) => `${e.id}` === `${eventId}`
-    );
-    if (
-      eventIndex !== -1 &&
-      confirm("Are you sure you want to delete this event?")
-    ) {
-      this._events.splice(eventIndex, 1);
-      this._calendar.getEventById(eventId).remove();
-
-      // dispatch a custom event to notify the parent component
-      this.dispatchEvent(
-        new CustomEvent("delete-event", {
-          detail: {
-            eventId,
-          },
-          bubbles: true,
-        })
-      );
+    // Update the input value and name
+    if (["name", "value"].includes(name)) {
+      this.handleValue(this.getAttribute("value"), this.getAttribute("name"));
     }
-  };
+
+    // refetch calendar events
+    if (name === "value" && this._calendar) {
+      this._calendar.refetchEvents();
+    }
+
+    // refetch instruments
+    if (name === "instruments" && this._calendar) {
+      this._calendar.refetchResources();
+    }
+
+    // refetch proposals
+    if (name === "proposals" && this._calendar) {
+      this.refetchProposals();
+    }
+  }
 }
 
 customElements.define("calendar-element", CalendarElement);
