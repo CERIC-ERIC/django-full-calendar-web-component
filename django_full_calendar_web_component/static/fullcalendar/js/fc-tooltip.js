@@ -1,9 +1,5 @@
-class FCTooltip {
-  static TOOLTIP_MARGIN = 4;
-  static TOOLTIP_WINDOW_MARGIN = 16;
+class FCTooltip extends BaseTooltip {
   static TOOLTIP_INSTANCES = {};
-  static TRANSITION_DURATION = 100; // ms
-
   static DATE_FORMAT = {
     month: "numeric",
     year: "numeric",
@@ -12,96 +8,30 @@ class FCTooltip {
     minute: "2-digit",
   };
 
-  eventElem = null;
   eventInfo = null;
-  tooltip = null;
 
-  static getInstace = (eventInfo) => {
-    const instanceId = eventInfo._instance.instanceId;
-
-    if (FCTooltip.TOOLTIP_INSTANCES[instanceId]) {
-      return FCTooltip.TOOLTIP_INSTANCES[instanceId];
-    } else {
-      return null;
-    }
-  };
-
-  static disposeAll = () => {
-    Object.values(FCTooltip.TOOLTIP_INSTANCES).forEach((tooltip) =>
-      tooltip.dispose()
-    );
-  };
-
-  constructor(el, event, extraInfo, actions) {
-    const instanceId = event._instance.instanceId;
-
-    this.eventElem = el;
-
-    this.createTooltip(event, extraInfo, actions);
+  constructor(el, eventInfo, extraInfo, actions) {
+    super(el);
+    this.eventInfo = eventInfo;
+    this.createTooltip(eventInfo, extraInfo, actions);
     this.setupTooltipListeners();
 
+    const instanceId = eventInfo._instance.instanceId;
     FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;
   }
 
-  dispose = () => {
-    this.eventElem.removeEventListener("mouseenter", this.handleEventClick);
-    this.eventElem.removeEventListener("mouseleave", this.handleClickOutside);
-    this.tooltip.remove();
-    delete FCTooltip.TOOLTIP_INSTANCES[this.eventInfo._instance.instanceId];
-  };
+  static getInstance(eventInfo) {
+    const instanceId = eventInfo._instance.instanceId;
+    return FCTooltip.TOOLTIP_INSTANCES[instanceId] || null;
+  }
 
-  update = (eventInfo, extraInfo) => {
-    this.eventInfo = eventInfo;
-    // Get tooltip elements
-    const titleBox = this.tooltip.querySelector(".fc-tooltip__title-box");
-    const colorDot = titleBox.querySelector(".fc-daygrid-event-dot");
-    const title = titleBox.querySelector("span");
-    const body = this.tooltip.querySelector(".fc-tooltip__body");
-
-    // Prepare tooltip content
-    const eventType = extraInfo.type;
-    const eventProposal = extraInfo.proposal;
-    const eventInstrument = extraInfo.instrument;
-
-    const startDate = FullCalendar.formatDate(
-      this.eventInfo.start,
-      FCTooltip.DATE_FORMAT
+  static disposeAll() {
+    Object.values(FCTooltip.TOOLTIP_INSTANCES).forEach((tooltip) =>
+      tooltip.dispose()
     );
+  }
 
-    const endDate = FullCalendar.formatDate(
-      this.eventInfo.end,
-      FCTooltip.DATE_FORMAT
-    );
-
-    // Update tooltip content
-    colorDot.style.borderColor = this.eventInfo.backgroundColor;
-    title.textContent = this.eventInfo.title;
-    body.innerHTML = `
-    <b>Type:</b> ${eventType}<br>
-      ${
-        eventProposal
-          ? `<b>Proposal:</b> ${
-              eventProposal.url
-                ? `<a href="${eventProposal.url}">${eventProposal.title}</a>`
-                : eventProposal.title
-            }<br>`
-          : ""
-      }
-      ${
-        eventInstrument
-          ? `<b>Instrument:</b> ${
-              eventInstrument.url
-                ? `<a href="${eventInstrument.url}">${eventInstrument.title}</a>`
-                : eventInstrument.title
-            }<br>`
-          : ""
-      }
-      <b>From:</b> ${startDate}<br>
-      <b>To:</b> ${endDate}
-    `;
-  };
-
-  createTooltip = (eventInfo, extraInfo, actions) => {
+  createTooltip(eventInfo, extraInfo, actions) {
     const tooltip = document.createElement("div");
     tooltip.className = "fc-tooltip";
 
@@ -151,109 +81,67 @@ class FCTooltip {
 
     // First update
     this.update(eventInfo, extraInfo);
-  };
+  }
 
-  setupTooltipListeners = () => {
-    this.eventElem.addEventListener("click", this.handleEventClick);
-  };
+  update(eventInfo, extraInfo) {
+    this.eventInfo = eventInfo;
+    // Get tooltip elements
+    const titleBox = this.tooltip.querySelector(".fc-tooltip__title-box");
+    const colorDot = titleBox.querySelector(".fc-daygrid-event-dot");
+    const title = titleBox.querySelector("span");
+    const body = this.tooltip.querySelector(".fc-tooltip__body");
 
-  getTooltipPosition = (event) => {
-    // position the tooltip relative to the sticky title
-    const eventTitle =
-      this.eventElem.querySelector(".fc-sticky") || this.eventElem;
+    // Prepare tooltip content
+    const eventType = extraInfo.type;
+    const eventProposal = extraInfo.proposal;
+    const eventInstrument = extraInfo.instrument;
 
-    const rect = eventTitle.getBoundingClientRect();
-
-    const posX =
-      rect.left -
-      this.tooltip.offsetWidth -
-      FCTooltip.TOOLTIP_MARGIN +
-      window.scrollX;
-    const posY =
-      rect.top +
-      rect.height / 2 -
-      this.tooltip.offsetHeight / 2 +
-      window.scrollY;
-
-    // keep the tooltip inside the window with 10px margin
-    const fixedPosX = Math.min(
-      Math.max(10 + window.scrollX, posX),
-      window.innerWidth +
-        window.scrollX -
-        this.tooltip.offsetWidth / 2 -
-        FCTooltip.TOOLTIP_WINDOW_MARGIN
+    const startDate = FullCalendar.formatDate(
+      this.eventInfo.start,
+      FCTooltip.DATE_FORMAT
     );
 
-    let fixedPosY = posY;
-    // Check if the tooltip will go out of the window at the bottom
-    if (
-      posY + this.tooltip.offsetHeight + FCTooltip.TOOLTIP_WINDOW_MARGIN >
-      window.innerHeight + window.scrollY
-    ) {
-      fixedPosY =
-        window.scrollY +
-        window.innerHeight -
-        this.tooltip.offsetHeight -
-        FCTooltip.TOOLTIP_WINDOW_MARGIN;
-    }
+    const endDate = FullCalendar.formatDate(
+      this.eventInfo.end,
+      FCTooltip.DATE_FORMAT
+    );
 
-    // Check if the tooltip will go out of the window at the top
+    // Update tooltip content
+    colorDot.style.borderColor = this.eventInfo.backgroundColor;
+    title.textContent = this.eventInfo.title;
+    body.innerHTML = `
+      <b>Type:</b> ${eventType}<br>
+      ${
+        eventProposal
+          ? `<b>Proposal:</b> ${
+              eventProposal.url
+                ? `<a href="${eventProposal.url}">${eventProposal.title}</a>`
+                : eventProposal.title
+            }<br>`
+          : ""
+      }
+      ${
+        eventInstrument
+          ? `<b>Instrument:</b> ${
+              eventInstrument.url
+                ? `<a href="${eventInstrument.url}">${eventInstrument.title}</a>`
+                : eventInstrument.title
+            }<br>`
+          : ""
+      }
+      <b>From:</b> ${startDate}<br>
+      <b>To:</b> ${endDate}
+    `;
+  }
 
-    if (posY < window.scrollY + FCTooltip.TOOLTIP_WINDOW_MARGIN) {
-      fixedPosY = window.scrollY + FCTooltip.TOOLTIP_WINDOW_MARGIN;
-    }
+  setupTooltipListeners() {
+    this.eventElem.addEventListener("click", this.handleEventClick);
+  }
 
-    return { x: fixedPosX, y: fixedPosY };
-  };
-
-  showTooltip = (posX, posY) => {
-    this.tooltip.style.left = `${posX}px`;
-    this.tooltip.style.top = `${posY}px`;
-    this.tooltip.classList.add("fc-tooltip--show");
-  };
-
-  hideTooltip = () => {
-    this.tooltip.classList.remove("fc-tooltip--show");
+  dispose() {
+    this.eventElem.removeEventListener("click", this.handleEventClick);
     this.removeListeners();
-    window.setTimeout(() => {
-      this.tooltip.removeAttribute("style");
-    }, FCTooltip.TRANSITION_DURATION);
-  };
-
-  handleEventClick = (event) => {
-    const tooltipPosition = this.getTooltipPosition(event);
-    this.showTooltip(tooltipPosition.x, tooltipPosition.y);
-
-    // prevent add duplicate listeners
-    this.removeListeners();
-
-    // Hide tooltip when clicking outside
-    document.addEventListener("mousedown", this.handleClickOutside);
-    // Hide tooltip when scrolling
-    window.addEventListener("scroll", this.handleScroll, true);
-    // Hide tooltip when resizing
-    window.addEventListener("resize", this.handleResize, true);
-  };
-
-  handleClickOutside = (event) => {
-    if (!this.tooltip.contains(event.target)) {
-      this.hideTooltip();
-    } else {
-      event.stopPropagation();
-    }
-  };
-
-  handleScroll = () => {
-    this.hideTooltip();
-  };
-
-  handleResize = () => {
-    this.hideTooltip();
-  };
-
-  removeListeners = () => {
-    document.removeEventListener("mousedown", this.handleClickOutside);
-    window.removeEventListener("scroll", this.handleScroll, true);
-    window.removeEventListener("resize", this.handleResize, true);
-  };
+    this.tooltip.remove();
+    delete FCTooltip.TOOLTIP_INSTANCES[this.eventInfo._instance.instanceId];
+  }
 }
