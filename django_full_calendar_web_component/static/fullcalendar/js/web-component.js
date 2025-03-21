@@ -228,7 +228,13 @@ class CalendarElement extends HTMLElement {
           label: "Edit event",
           icon: "edit",
           callback: (event) => {
-            this.editEvent(event.id);
+            // Switch to edit mode in tooltip instead of directly calling editEvent
+            const tooltip = FCTooltip.getInstance(event);
+            if (tooltip) {
+              tooltip.setState({ viewMode: 'edit' });
+            } else {
+              this.editEvent(event.id);
+            }
           },
         });
       }
