@@ -42,8 +42,12 @@ class CalendarElement extends HTMLElement {
     this._proposals = [];
   }
 
-  refetchProposals = () => {
+  fetchProposals = () => {
     this._proposals = JSON.parse(this.getAttribute("proposals"));
+  };
+
+  fetchInstruments = () => {
+    this._instruments = JSON.parse(this.getAttribute("instruments"));
   };
 
   /**
@@ -58,8 +62,8 @@ class CalendarElement extends HTMLElement {
       let calendarEl = document.createElement("div");
       this.appendChild(calendarEl);
       let calendar = new FullCalendar.Calendar(calendarEl, fcOptions);
-      calendar.render();
       this._calendar = calendar;
+      calendar.render();
     }
   }
 
@@ -80,7 +84,8 @@ class CalendarElement extends HTMLElement {
    * Initialize the component
    */
   connectedCallback() {
-    this.refetchProposals();
+    this.fetchInstruments();
+    this.fetchProposals();
     this.handleOptions(this.getAttribute("options"));
     this.handleValue(this.getAttribute("value"), this.getAttribute("name"));
   }
@@ -92,7 +97,7 @@ class CalendarElement extends HTMLElement {
     // destroy the calendar
     this._calendar.destroy();
     // dispose all tooltips
-    // FCTooltip.disposeAll();
+    FCTooltip.disposeAll();
   }
 
   eventToFCEvent = (event) => {
@@ -207,8 +212,7 @@ class CalendarElement extends HTMLElement {
   resourceSource = (_fetchInfo, successCallback) => {
     try {
       // create resources from the instruments
-      const instruments = JSON.parse(this.getAttribute("instruments"));
-      successCallback(instruments);
+      successCallback(this._instruments);
     } catch (error) {
       failureCallback(error);
     }
@@ -239,20 +243,43 @@ class CalendarElement extends HTMLElement {
         });
       }
 
-      // new FCTooltip(info.el, info.event, this._calendar, tooltipActions);
+      const instrumentId = info.event.getResources().map((r) => r.id)[0];
+      const instrument = this._instruments.find((i) => i.id === instrumentId);
+
+      const proposal = this._proposals.find(
+        (p) => p.id === info.event.extendedProps.proposal
+      );
+
+      new FCTooltip(
+        info.el,
+        info.event,
+        {
+          type: info.event.extendedProps.type,
+          instrument,
+          proposal,
+        },
+        tooltipActions
+      );
     }
   };
 
   handleEventWillUnmount = (info) => {
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
-      // FCTooltip.getInstace(info.event)?.dispose();
+      FCTooltip.getInstace(info.event)?.dispose();
     }
   };
 
   editEvent = (eventId) => {};
 
-  deleteEvent = (eventId) => {};
+  deleteEvent = (eventId) => {
+    if (window.confirm("Are you sure you want to delete this event?")) {
+      const events = JSON.parse(this.getAttribute("value"));
+      const eventIndex = events.findIndex((e) => `${e.id}` === `${eventId}`);
+      events.splice(eventIndex, 1);
+      this.setAttribute("value", JSON.stringify(events));
+    }
+  };
 
   handleEventChange = (changeInfo) => {
     // write changes into the attribute
@@ -266,6 +293,14 @@ class CalendarElement extends HTMLElement {
     events[eventIndex].end = changeInfo.event.end.toISOString();
 
     this.setAttribute("value", JSON.stringify(events));
+
+    // dispatch custom event and bubble it up
+    this.dispatchEvent(
+      new CustomEvent("change", {
+        bubbles: true,
+        detail: { changeInfo },
+      })
+    );
   };
 
   addEvent = (event) => {
@@ -290,14 +325,15 @@ class CalendarElement extends HTMLElement {
       this._calendar.refetchEvents();
     }
 
-    // refetch instruments
-    if (name === "instruments" && this._calendar) {
-      this._calendar.refetchResources();
-    }
-
     // refetch proposals
     if (name === "proposals" && this._calendar) {
-      this.refetchProposals();
+      this.fetchProposals();
+    }
+
+    // refetch instruments
+    if (name === "instruments" && this._calendar) {
+      this.fetchInstruments();
+      this._calendar.refetchResources();
     }
   }
 }

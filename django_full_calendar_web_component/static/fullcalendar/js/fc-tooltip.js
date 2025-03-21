@@ -32,13 +32,12 @@ class FCTooltip {
     );
   };
 
-  constructor(el, event, calendarInstance, actions) {
+  constructor(el, event, extraInfo, actions) {
     const instanceId = event._instance.instanceId;
-    this._calendar = calendarInstance;
 
     this.eventElem = el;
 
-    this.createTooltip(event, actions);
+    this.createTooltip(event, extraInfo, actions);
     this.setupTooltipListeners();
 
     FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;
@@ -51,7 +50,7 @@ class FCTooltip {
     delete FCTooltip.TOOLTIP_INSTANCES[this.eventInfo._instance.instanceId];
   };
 
-  update = (eventInfo) => {
+  update = (eventInfo, extraInfo) => {
     this.eventInfo = eventInfo;
     // Get tooltip elements
     const titleBox = this.tooltip.querySelector(".fc-tooltip__title-box");
@@ -83,8 +82,8 @@ class FCTooltip {
         eventProposal
           ? `<b>Proposal:</b> ${
               eventProposal.url
-                ? `<a href="${eventProposal.url}">${eventProposal.name}</a>`
-                : eventProposal.name
+                ? `<a href="${eventProposal.url}">${eventProposal.title}</a>`
+                : eventProposal.title
             }<br>`
           : ""
       }
@@ -92,8 +91,8 @@ class FCTooltip {
         eventInstrument
           ? `<b>Instrument:</b> ${
               eventInstrument.url
-                ? `<a href="${eventInstrument.url}">${eventInstrument.name}</a>`
-                : eventInstrument.name
+                ? `<a href="${eventInstrument.url}">${eventInstrument.title}</a>`
+                : eventInstrument.title
             }<br>`
           : ""
       }
@@ -102,7 +101,7 @@ class FCTooltip {
     `;
   };
 
-  createTooltip = (eventInfo, actions) => {
+  createTooltip = (eventInfo, extraInfo, actions) => {
     const tooltip = document.createElement("div");
     tooltip.className = "fc-tooltip";
 
@@ -151,7 +150,7 @@ class FCTooltip {
     this.tooltip = tooltip;
 
     // First update
-    this.update(eventInfo);
+    this.update(eventInfo, extraInfo);
   };
 
   setupTooltipListeners = () => {
