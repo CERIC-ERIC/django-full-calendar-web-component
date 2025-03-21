@@ -221,40 +221,22 @@ class CalendarElement extends HTMLElement {
   handleEventDidMount = (info) => {
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
-      const tooltipActions = [];
-
-      if (this._options.hasChangePermission) {
-        tooltipActions.push({
-          label: "Edit event",
-          icon: "edit",
-          callback: (event) => {
-            // Switch to edit mode in tooltip instead of directly calling editEvent
-            const tooltip = FCTooltip.getInstance(event);
-            if (tooltip) {
-              tooltip.setState({ viewMode: 'edit' });
-            } else {
-              this.editEvent(event.id);
-            }
-          },
-        });
-      }
-
-      if (this._options.hasDeletePermission) {
-        tooltipActions.push({
-          label: "Delete event",
-          icon: "trash-alt",
-          callback: (event) => {
-            this.deleteEvent(event.id);
-          },
-        });
-      }
-
       const instrumentId = info.event.getResources().map((r) => r.id)[0];
       const instrument = this._instruments.find((i) => i.id === instrumentId);
 
       const proposal = this._proposals.find(
         (p) => p.id === info.event.extendedProps.proposal
       );
+      
+      // Add event listeners for tooltip custom events
+      info.el.addEventListener('fc:event-delete', (e) => {
+        this.deleteEvent(e.detail.eventId);
+      });
+      
+      info.el.addEventListener('fc:event-updated', (e) => {
+        // If we need any additional logic beyond what FullCalendar already handles
+        // We can add it here
+      });
 
       new FCTooltip(
         info.el,
@@ -264,7 +246,10 @@ class CalendarElement extends HTMLElement {
           instrument,
           proposal,
         },
-        tooltipActions
+        {
+          canEdit: this._options.hasChangePermission,
+          canDelete: this._options.hasDeletePermission
+        }
       );
     }
   };

@@ -10,16 +10,16 @@ class FCTooltip extends BaseTooltip {
 
   eventInfo = null;
   extraInfo = null;
-  actions = null;
+  permissions = null;
   state = {
     viewMode: "info", // 'info' or 'edit'
   };
 
-  constructor(el, eventInfo, extraInfo, actions) {
+  constructor(el, eventInfo, extraInfo, permissions) {
     super(el);
     this.eventInfo = eventInfo;
     this.extraInfo = extraInfo;
-    this.actions = actions;
+    this.permissions = permissions;
     this.createTooltip();
     this.setupTooltipListeners();
 
@@ -59,7 +59,7 @@ class FCTooltip extends BaseTooltip {
 
   // Template for the info view
   renderInfoView() {
-    const { eventInfo, extraInfo, actions } = this;
+    const { eventInfo, extraInfo, permissions } = this;
 
     const startDate = FullCalendar.formatDate(
       eventInfo.start,
@@ -73,6 +73,25 @@ class FCTooltip extends BaseTooltip {
 
     // Clear previous content
     this.tooltip.innerHTML = "";
+
+    // Build actions based on permissions
+    const actions = [];
+    
+    if (permissions.canEdit) {
+      actions.push({
+        label: "Edit event",
+        icon: "edit",
+        callback: () => this.setState({ viewMode: 'edit' })
+      });
+    }
+    
+    if (permissions.canDelete) {
+      actions.push({
+        label: "Delete event",
+        icon: "trash-alt",
+        callback: () => this.handleDeleteEvent()
+      });
+    }
 
     // Create header template
     const header = this.createHeader(
@@ -118,10 +137,15 @@ class FCTooltip extends BaseTooltip {
     // Clear previous content
     this.tooltip.innerHTML = "";
 
-    // Create header
+    // Create header with cancel action
     const header = this.createHeader(
       "Edit Event",
-      this.eventInfo.backgroundColor
+      this.eventInfo.backgroundColor,
+      [{
+        label: "Cancel",
+        icon: "times",
+        callback: () => this.setState({ viewMode: "info" })
+      }]
     );
 
     this.tooltip.appendChild(header);
@@ -149,42 +173,81 @@ class FCTooltip extends BaseTooltip {
           this.eventInfo.end
         )}">
       </div>
-      <button type="button" class="btn btn-primary btn-sm mt-2">Save Changes</button>
-      <button type="button" class="btn btn-secondary btn-sm mt-2">Cancel</button> 
+      <div class="d-flex justify-content-between mt-2">
+        <button type="button" class="btn btn-primary btn-sm" id="save-btn">Save Changes</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="cancel-btn">Cancel</button>
+      </div>
     `;
 
-    // Add form submit handler
-    const saveButton = form.querySelector("button");
+    // Add save button handler
+    const saveButton = form.querySelector("#save-btn");
     saveButton.addEventListener("click", (e) => {
       e.preventDefault();
-
-      // Get form values
-      const startInput = form.querySelector("#event-start").value;
-      const endInput = form.querySelector("#event-end").value;
-
-      // Validate dates
-      if (!startInput || !endInput) {
-        alert("Both start and end dates are required");
-        return;
-      }
-
-      const newStart = new Date(startInput);
-      const newEnd = new Date(endInput);
-
-      // Validate end is after start
-      if (newEnd <= newStart) {
-        alert("End date must be after start date");
-        return;
-      }
-
-      // Update event dates using FullCalendar API
-      this.eventInfo.setDates(newStart, newEnd);
-
-      // Switch back to info view
+      this.handleSaveEvent(form);
+    });
+    
+    // Add cancel button handler
+    const cancelButton = form.querySelector("#cancel-btn");
+    cancelButton.addEventListener("click", (e) => {
+      e.preventDefault();
       this.setState({ viewMode: "info" });
     });
 
     this.tooltip.appendChild(form);
+  }
+  
+  // Handler for saving event changes
+  handleSaveEvent(form) {
+    // Get form values
+    const startInput = form.querySelector("#event-start").value;
+    const endInput = form.querySelector("#event-end").value;
+    
+    // Validate dates
+    if (!startInput || !endInput) {
+      alert("Both start and end dates are required");
+      return;
+    }
+    
+    const newStart = new Date(startInput);
+    const newEnd = new Date(endInput);
+    
+    // Validate end is after start
+    if (newEnd <= newStart) {
+      alert("End date must be after start date");
+      return;
+    }
+    
+    // Update event dates using FullCalendar API
+    this.eventInfo.setDates(newStart, newEnd);
+    
+    // Dispatch custom event for external listeners
+    this.eventElem.dispatchEvent(new CustomEvent('fc:event-updated', {
+      bubbles: true,
+      detail: {
+        eventId: this.eventInfo.id,
+        newStart,
+        newEnd
+      }
+    }));
+    
+    // Switch back to info view
+    this.setState({ viewMode: "info" });
+  }
+  
+  // Handler for deleting an event
+  handleDeleteEvent() {
+    if (window.confirm("Are you sure you want to delete this event?")) {
+      // Dispatch a custom event for deletion
+      this.eventElem.dispatchEvent(new CustomEvent('fc:event-delete', {
+        bubbles: true,
+        detail: {
+          eventId: this.eventInfo.id
+        }
+      }));
+      
+      // Hide tooltip after deletion request
+      this.hideTooltip();
+    }
   }
 
   // Helper method to create the header section
@@ -210,7 +273,7 @@ class FCTooltip extends BaseTooltip {
       actionButton.innerHTML = `<i class='fas fa-${action.icon}'></i>`;
       actionButton.addEventListener("click", (e) => {
         e.stopPropagation();
-        action.callback(this.eventInfo);
+        action.callback();
       });
       titleBox.appendChild(actionButton);
     });
