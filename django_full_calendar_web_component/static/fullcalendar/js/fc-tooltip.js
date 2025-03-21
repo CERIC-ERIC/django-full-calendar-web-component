@@ -76,20 +76,20 @@ class FCTooltip extends BaseTooltip {
 
     // Build actions based on permissions
     const actions = [];
-    
+
     if (permissions.canEdit) {
       actions.push({
         label: "Edit event",
         icon: "edit",
-        callback: () => this.setState({ viewMode: 'edit' })
+        callback: () => this.setState({ viewMode: "edit" }),
       });
     }
-    
+
     if (permissions.canDelete) {
       actions.push({
         label: "Delete event",
         icon: "trash-alt",
-        callback: () => this.handleDeleteEvent()
+        callback: () => this.handleDeleteEvent(),
       });
     }
 
@@ -140,12 +140,7 @@ class FCTooltip extends BaseTooltip {
     // Create header with cancel action
     const header = this.createHeader(
       "Edit Event",
-      this.eventInfo.backgroundColor,
-      [{
-        label: "Cancel",
-        icon: "times",
-        callback: () => this.setState({ viewMode: "info" })
-      }]
+      this.eventInfo.backgroundColo
     );
 
     this.tooltip.appendChild(header);
@@ -161,19 +156,19 @@ class FCTooltip extends BaseTooltip {
 
     // Form with only start and end date fields
     form.innerHTML = `
-      <div class="form-group">
-        <label>Start Date</label>
+      <div>
+        <label class="m-0">Start Date</label>
         <input type="datetime-local" class="form-control" id="event-start" value="${formatDateTimeForInput(
           this.eventInfo.start
         )}">
       </div>
-      <div class="form-group">
-        <label>End Date</label>
+      <div>
+        <label class="m-0">End Date</label>
         <input type="datetime-local" class="form-control" id="event-end" value="${formatDateTimeForInput(
           this.eventInfo.end
         )}">
       </div>
-      <div class="d-flex justify-content-between mt-2">
+      <div class="d-flex justify-content-between mt-2 mb-1">
         <button type="button" class="btn btn-primary btn-sm" id="save-btn">Save Changes</button>
         <button type="button" class="btn btn-secondary btn-sm" id="cancel-btn">Cancel</button>
       </div>
@@ -185,7 +180,7 @@ class FCTooltip extends BaseTooltip {
       e.preventDefault();
       this.handleSaveEvent(form);
     });
-    
+
     // Add cancel button handler
     const cancelButton = form.querySelector("#cancel-btn");
     cancelButton.addEventListener("click", (e) => {
@@ -195,56 +190,60 @@ class FCTooltip extends BaseTooltip {
 
     this.tooltip.appendChild(form);
   }
-  
+
   // Handler for saving event changes
   handleSaveEvent(form) {
     // Get form values
     const startInput = form.querySelector("#event-start").value;
     const endInput = form.querySelector("#event-end").value;
-    
+
     // Validate dates
     if (!startInput || !endInput) {
       alert("Both start and end dates are required");
       return;
     }
-    
+
     const newStart = new Date(startInput);
     const newEnd = new Date(endInput);
-    
+
     // Validate end is after start
     if (newEnd <= newStart) {
       alert("End date must be after start date");
       return;
     }
-    
+
     // Update event dates using FullCalendar API
     this.eventInfo.setDates(newStart, newEnd);
-    
+
     // Dispatch custom event for external listeners
-    this.eventElem.dispatchEvent(new CustomEvent('fc:event-updated', {
-      bubbles: true,
-      detail: {
-        eventId: this.eventInfo.id,
-        newStart,
-        newEnd
-      }
-    }));
-    
+    this.eventElem.dispatchEvent(
+      new CustomEvent("fc:event-updated", {
+        bubbles: true,
+        detail: {
+          eventId: this.eventInfo.id,
+          newStart,
+          newEnd,
+        },
+      })
+    );
+
     // Switch back to info view
     this.setState({ viewMode: "info" });
   }
-  
+
   // Handler for deleting an event
   handleDeleteEvent() {
     if (window.confirm("Are you sure you want to delete this event?")) {
       // Dispatch a custom event for deletion
-      this.eventElem.dispatchEvent(new CustomEvent('fc:event-delete', {
-        bubbles: true,
-        detail: {
-          eventId: this.eventInfo.id
-        }
-      }));
-      
+      this.eventElem.dispatchEvent(
+        new CustomEvent("fc:event-delete", {
+          bubbles: true,
+          detail: {
+            eventId: this.eventInfo.id,
+          },
+        })
+      );
+
       // Hide tooltip after deletion request
       this.hideTooltip();
     }
