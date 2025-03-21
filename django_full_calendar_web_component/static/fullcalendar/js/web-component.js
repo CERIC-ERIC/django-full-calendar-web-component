@@ -266,7 +266,7 @@ class CalendarElement extends HTMLElement {
   handleEventWillUnmount = (info) => {
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
-      FCTooltip.getInstace(info.event)?.dispose();
+      FCTooltip.getInstance(info.event)?.dispose();
     }
   };
 
