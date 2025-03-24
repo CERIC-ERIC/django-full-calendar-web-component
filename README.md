@@ -26,85 +26,128 @@ Replace `'your_license_key_here'` with your actual FullCalendar Premium license 
 
 This app provides an html web component that integrates the FullCalendar library to render a fully interactive calendar in django. It is specially designed to be used as a experiments calendar in the PMS, but it can be used in any other html5 project.
 
-## Example Usage
+### Basic Integration
 
-Below is an example of how to use the calendar component and listen to its custom events:
+Include the web component in your template:
 
 ```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Calendar Component Demo</title>
-  <link rel="stylesheet" href="path/to/fullcalendar/bootstrap5.min.css">
-  <script src="path/to/fullcalendar/main.min.js"></script>
-  <script src="path/to/web-component.js"></script>
-  <script src="path/to/fc-tooltip.js"></script>
-</head>
-<body>
-  <calendar-element
-    options='{
-      "initialView": "dayGridMonth",
-      "headerToolbar": {"left": "prev,next today", "center": "title", "right": "dayGridMonth,timeGridWeek,timeGridDay"},
-      "slotDuration": "00:30:00",
-      "hasChangePermission": true,
-      "hasDeletePermission": true
-    }'
-    initial-value='[
-      {
-        "id": 1,
-        "start": "2025-03-10T09:00:00",
-        "end": "2025-03-10T10:00:00",
-        "title": "Meeting",
-        "proposal": {"id": 101, "name": "Project Kickoff"},
-        "instrument": {"id": 201, "name": "Room A"},
-        "type": "meeting"
-      }
-    ]'>
-  </calendar-element>
+{% load static fc_license pages_tags %}
+{% include "calendar_element/web_component.html" %}
 
-  <script>
-    const calendarElement = document.querySelector('calendar-element');
-
-    calendarElement.addEventListener('edit-event', (e) => {
-      console.log('Edit event triggered for event ID:', e.detail.eventId);
-      // Implement your edit functionality here.
-    });
-
-    calendarElement.addEventListener('delete-event', (e) => {
-      console.log('Delete event triggered for event ID:', e.detail.eventId);
-      // Implement your delete functionality here.
-    });
-
-    calendarElement.addEventListener('change-event', (e) => {
-      console.log('Event changed:', e.detail.changeInfo);
-      // Handle updates (e.g., update the backend).
-    });
-  </script>
-</body>
-</html>
+<calendar-element 
+    name="events" 
+    value="[]"
+    instruments="[]"
+    proposals="[]"
+    options='{"initialView":"resourceTimeGridWeek","slotDuration":"01:00:00","hasChangePermission":true,"hasDeletePermission":true}'>
+</calendar-element>
 ```
 
-## Component attributes and events
+### Web Component Attributes
 
-### Attributes
+The `<calendar-element>` supports the following attributes:
 
-- **options:**  
-  A JSON string that configures the calendar. It includes settings for initial view, header toolbar, slot duration, and permissions (e.g., `hasChangePermission` and `hasDeletePermission`).
+| Attribute     | Type     | Required | Description                                                    |
+|---------------|----------|----------|----------------------------------------------------------------|
+| `name`        | String   | Yes      | Form field name for the hidden input containing calendar data  |
+| `value`       | JSON     | Yes      | Events data as a JSON string                                   |
+| `instruments` | JSON     | Yes      | Resources/instruments data as a JSON string                     |
+| `proposals`   | JSON     | Yes      | Proposal data as a JSON string                                 |
+| `options`     | JSON     | Yes      | FullCalendar configuration options                             |
+| `readonly`    | Boolean  | No       | If present, makes the calendar read-only                       |
 
-- **initial-value:**  
-  A JSON string representing the initial set of events. Each event can include properties such as `id`, `start`, `end`, `title`, `proposal`, `instrument`, and `type`.
+### Data Formats
 
-- **readonly (optional):**  
-  When this attribute is present, the calendar disables editing functionalities.
+#### Events Format
 
-### Custom Events
+```json
+[
+  {
+    "id": 1,
+    "start": "2025-03-24T09:00:00",
+    "end": "2025-03-24T12:00:00",
+    "instrument": 123,
+    "proposal": 456,
+    "type": "experiment",
+    "title": "Optional additional title"
+  },
+  {
+    "id": 2,
+    "start": "2025-03-25T13:00:00",
+    "end": "2025-03-25T15:00:00",
+    "instrument": 124,
+    "type": "reserved",
+    "title": "Maintenance"
+  }
+]
+```
 
-- **edit-event:**  
-  Emitted when the "Edit event" action is triggered from a tooltip. The event detail contains the `eventId` for the event to be edited.
+#### Instruments Format
 
-- **delete-event:**  
-  Emitted when an event is deleted. The event detail contains the `eventId` of the removed event.
+```json
+[
+  {
+    "id": 123,
+    "title": "Instrument Name",
+    "url": "/instruments/123/"
+  }
+]
+```
 
-- **change-event:**  
-  Emitted when an event is modified (e.g., its time changes due to dragging). The event detail includes information about the change.
+#### Proposals Format
+
+```json
+[
+  {
+    "id": 456,
+    "title": "Proposal Title",
+    "url": "/proposals/456/"
+  }
+]
+```
+
+#### Options Format
+
+```json
+{
+  "initialView": "resourceTimeGridWeek",
+  "views": {
+    "resourceTimeGridDay": { "titleFormat": { "weekday": "long", "month": "long", "day": "numeric" } },
+    "resourceTimeGridWeek": { "titleFormat": { "month": "long", "year": "numeric" } },
+    "resourceTimeGridMonth": { "titleFormat": { "year": "numeric" } }
+  },
+  "headerToolbar": {
+    "left": "prev,next today",
+    "center": "title",
+    "right": "resourceTimeGridDay,resourceTimeGridWeek,resourceTimeGridMonth"
+  },
+  "slotDuration": "01:00:00",
+  "hasChangePermission": true,
+  "hasDeletePermission": true
+}
+```
+
+### Event Types
+
+The calendar supports two types of events:
+
+- **experiment**: Regular events associated with a proposal
+- **reserved**: Reserved time slots (e.g., maintenance, holidays)
+
+### Customization with Handlebars Templates
+
+The calendar tooltips are customizable using Handlebars templates. The following templates are available:
+
+1. **info_view.hbs**: Displays detailed information about an event
+2. **edit_view.hbs**: Form for editing event details
+3. **header_partial.hbs**: Common header used in both views
+
+You can customize these templates in the `handlebars/` directory.
+
+### Events
+
+The component emits the following custom events:
+
+- **change**: Fired when an event is moved or resized
+- **fc:event-delete**: Fired when an event is deleted via the tooltip
+- **fc:event-updated**: Fired when an event is updated via the tooltip
