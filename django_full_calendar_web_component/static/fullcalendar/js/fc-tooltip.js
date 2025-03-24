@@ -13,9 +13,17 @@ class FCTooltip extends BaseTooltip {
   eventInfo = null;
   extraInfo = null;
   permissions = null;
-  state = {
-    viewMode: "info", // 'info' or 'edit'
-  };
+
+  _viewMode = "info";
+
+  get viewMode() {
+    return this._viewMode;
+  }
+
+  set viewMode(value) {
+    this._viewMode = value;
+    this.render(); // Directly call render when value changes
+  }
 
   constructor(el, eventInfo, extraInfo, permissions) {
     super(el);
@@ -81,7 +89,7 @@ class FCTooltip extends BaseTooltip {
 
   // Main render method that chooses the appropriate template
   render() {
-    if (this.state.viewMode === "edit") {
+    if (this.viewMode === "edit") {
       this.renderEditView();
     } else {
       this.renderInfoView();
@@ -112,7 +120,9 @@ class FCTooltip extends BaseTooltip {
       actions.push({
         label: "Edit event",
         icon: "edit",
-        callback: () => this.setState({ viewMode: "edit" }),
+        callback: () => {
+          this.viewMode = "edit";
+        },
       });
     }
 
@@ -187,7 +197,7 @@ class FCTooltip extends BaseTooltip {
     const cancelButton = form.querySelector("#cancel-btn");
     cancelButton.addEventListener("click", (e) => {
       e.preventDefault();
-      this.setState({ viewMode: "info" });
+      this.viewMode = "info";
     });
   }
 
@@ -228,7 +238,7 @@ class FCTooltip extends BaseTooltip {
     );
 
     // Switch back to info view
-    this.setState({ viewMode: "info" });
+    this.viewMode = "info";
   }
 
   // Handler for deleting an event
@@ -247,12 +257,6 @@ class FCTooltip extends BaseTooltip {
       // Hide tooltip after deletion request
       this.hideTooltip();
     }
-  }
-
-  // Update state and re-render
-  setState(newState) {
-    this.state = { ...this.state, ...newState };
-    this.render();
   }
 
   setupTooltipListeners() {

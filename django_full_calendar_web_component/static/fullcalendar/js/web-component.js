@@ -1,5 +1,13 @@
+/**
+ * Calendar Web Component
+ *
+ * A custom HTML element that integrates FullCalendar with Django forms.
+ * Manages calendar events, proposals, instruments, and user interactions.
+ */
 class CalendarElement extends HTMLElement {
-  // Define the observed attributes for the field use case
+  /**
+   * Attributes that trigger attributeChangedCallback when modified
+   */
   static observedAttributes = [
     "value",
     "name",
@@ -8,6 +16,9 @@ class CalendarElement extends HTMLElement {
     "proposals",
   ];
 
+  /**
+   * Color palette for different events
+   */
   static EVENT_COLORS = [
     "#2196f3",
     "#009688",
@@ -27,31 +38,95 @@ class CalendarElement extends HTMLElement {
     "#cddc39",
   ];
 
+  /**
+   * Background color for reserved events
+   */
   static RESERVED_BG = "#9e9e9e";
 
+  /**
+   * Get a color from the palette based on an index
+   */
   static getEventColor = (colorIndex) => {
     return CalendarElement.EVENT_COLORS[
       colorIndex % CalendarElement.EVENT_COLORS.length
     ];
   };
 
+  /**
+   * Initialize component state
+   */
   constructor() {
     super(...arguments);
     this._calendar = null;
     this._input = null;
     this._proposals = [];
+    this._instruments = [];
   }
 
-  fetchProposals = () => {
-    this._proposals = JSON.parse(this.getAttribute("proposals"));
-  };
-
-  fetchInstruments = () => {
-    this._instruments = JSON.parse(this.getAttribute("instruments"));
-  };
+  //==============================================================
+  // HTML ELEMENT LIFECYCLE METHODS
+  //==============================================================
 
   /**
-   * Initialize/update the calendar when options change
+   * Called when the element is added to the DOM
+   * Initialize the calendar and data
+   */
+  connectedCallback() {
+    this.fetchInstruments();
+    this.fetchProposals();
+    this.handleOptions(this.getAttribute("options"));
+    this.handleValue(this.getAttribute("value"), this.getAttribute("name"));
+  }
+
+  /**
+   * Called when the element is removed from the DOM
+   * Clean up resources to prevent memory leaks
+   */
+  disconnectedCallback() {
+    // destroy the calendar
+    this._calendar.destroy();
+    // dispose all tooltips
+    FCTooltip.disposeAll();
+  }
+
+  /**
+   * Called when an observed attribute changes
+   * Update component state accordingly
+   */
+  attributeChangedCallback(name) {
+    // Update the calendar options
+    if (name === "options" && this._calendar) {
+      this.handleOptions(this.getAttribute("options"));
+    }
+
+    // Update the input value and name
+    if (["name", "value"].includes(name)) {
+      this.handleValue(this.getAttribute("value"), this.getAttribute("name"));
+    }
+
+    // refetch calendar events
+    if (name === "value" && this._calendar) {
+      this._calendar.refetchEvents();
+    }
+
+    // refetch proposals
+    if (name === "proposals" && this._calendar) {
+      this.fetchProposals();
+    }
+
+    // refetch instruments
+    if (name === "instruments" && this._calendar) {
+      this.fetchInstruments();
+      this._calendar.refetchResources();
+    }
+  }
+
+  //==============================================================
+  // ATTRIBUTE HANDLING METHODS
+  //==============================================================
+
+  /**
+   * Parse options and initialize/update the calendar
    */
   handleOptions(optionsStr) {
     this._options = JSON.parse(optionsStr);
@@ -67,6 +142,9 @@ class CalendarElement extends HTMLElement {
     }
   }
 
+  /**
+   * Create or update the hidden input that sends data to the server
+   */
   handleValue(value, name) {
     if (!this._input) {
       this._input = document.createElement("input");
@@ -80,26 +158,27 @@ class CalendarElement extends HTMLElement {
     this._input.value = value;
   }
 
-  /**
-   * Initialize the component
-   */
-  connectedCallback() {
-    this.fetchInstruments();
-    this.fetchProposals();
-    this.handleOptions(this.getAttribute("options"));
-    this.handleValue(this.getAttribute("value"), this.getAttribute("name"));
-  }
+  //==============================================================
+  // DATA FETCHING AND TRANSFORMATION METHODS
+  //==============================================================
 
   /**
-   * Clean up the component
+   * Load proposals data from attribute
    */
-  disconnectedCallback() {
-    // destroy the calendar
-    this._calendar.destroy();
-    // dispose all tooltips
-    FCTooltip.disposeAll();
-  }
+  fetchProposals = () => {
+    this._proposals = JSON.parse(this.getAttribute("proposals"));
+  };
 
+  /**
+   * Load instruments data from attribute
+   */
+  fetchInstruments = () => {
+    this._instruments = JSON.parse(this.getAttribute("instruments"));
+  };
+
+  /**
+   * Convert an event object to FullCalendar format
+   */
   eventToFCEvent = (event) => {
     const newEvent = {
       id: `${event.id}`,
@@ -159,8 +238,12 @@ class CalendarElement extends HTMLElement {
     return newEvent;
   };
 
+  //==============================================================
+  // FULLCALENDAR CONFIGURATION METHODS
+  //==============================================================
+
   /**
-   * Prepare the FullCalendar options based on the attributes
+   * Generate FullCalendar configuration options
    */
   getFullCalendarOptions = () => {
     const isReadOnly = this.hasAttribute("readonly");
@@ -197,7 +280,7 @@ class CalendarElement extends HTMLElement {
   };
 
   /**
-   * Event sources to get the events from the value attribute
+   * Provide events data to FullCalendar
    */
   eventSource = (_fetchInfo, successCallback, failureCallback) => {
     try {
@@ -209,6 +292,9 @@ class CalendarElement extends HTMLElement {
     }
   };
 
+  /**
+   * Provide resources data to FullCalendar
+   */
   resourceSource = (_fetchInfo, successCallback) => {
     try {
       // create resources from the instruments
@@ -218,6 +304,14 @@ class CalendarElement extends HTMLElement {
     }
   };
 
+  //==============================================================
+  // EVENT HANDLING METHODS
+  //==============================================================
+
+  /**
+   * Called when an event is added to the DOM
+   * Sets up tooltips and event listeners
+   */
   handleEventDidMount = (info) => {
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
@@ -227,13 +321,13 @@ class CalendarElement extends HTMLElement {
       const proposal = this._proposals.find(
         (p) => p.id === info.event.extendedProps.proposal
       );
-      
+
       // Add event listeners for tooltip custom events
-      info.el.addEventListener('fc:event-delete', (e) => {
+      info.el.addEventListener("fc:event-delete", (e) => {
         this.deleteEvent(e.detail.eventId);
       });
-      
-      info.el.addEventListener('fc:event-updated', (e) => {
+
+      info.el.addEventListener("fc:event-updated", (e) => {
         // If we need any additional logic beyond what FullCalendar already handles
         // We can add it here
       });
@@ -248,12 +342,16 @@ class CalendarElement extends HTMLElement {
         },
         {
           canEdit: this._options.hasChangePermission,
-          canDelete: this._options.hasDeletePermission
+          canDelete: this._options.hasDeletePermission,
         }
       );
     }
   };
 
+  /**
+   * Called when an event is removed from the DOM
+   * Cleans up tooltips
+   */
   handleEventWillUnmount = (info) => {
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
@@ -261,17 +359,10 @@ class CalendarElement extends HTMLElement {
     }
   };
 
-  editEvent = (eventId) => {};
-
-  deleteEvent = (eventId) => {
-    if (window.confirm("Are you sure you want to delete this event?")) {
-      const events = JSON.parse(this.getAttribute("value"));
-      const eventIndex = events.findIndex((e) => `${e.id}` === `${eventId}`);
-      events.splice(eventIndex, 1);
-      this.setAttribute("value", JSON.stringify(events));
-    }
-  };
-
+  /**
+   * Called when an event is changed by drag/resize
+   * Updates the underlying data
+   */
   handleEventChange = (changeInfo) => {
     // write changes into the attribute
     const events = JSON.parse(this.getAttribute("value"));
@@ -294,39 +385,34 @@ class CalendarElement extends HTMLElement {
     );
   };
 
+  //==============================================================
+  // EVENT MANIPULATION METHODS
+  //==============================================================
+
+  /**
+   * Placeholder for event editing functionality
+   */
+  editEvent = (eventId) => {};
+
+  /**
+   * Delete an event after confirmation
+   */
+  deleteEvent = (eventId) => {
+    const events = JSON.parse(this.getAttribute("value"));
+    const eventIndex = events.findIndex((e) => `${e.id}` === `${eventId}`);
+    events.splice(eventIndex, 1);
+    this.setAttribute("value", JSON.stringify(events));
+  };
+
+  /**
+   * Add a new event to the calendar
+   */
   addEvent = (event) => {
     const events = JSON.parse(this.getAttribute("value"));
     events.push(event);
     this.setAttribute("value", JSON.stringify(events));
   };
-
-  attributeChangedCallback(name) {
-    // Update the calendar options
-    if (name === "options" && this._calendar) {
-      this.handleOptions(this.getAttribute("options"));
-    }
-
-    // Update the input value and name
-    if (["name", "value"].includes(name)) {
-      this.handleValue(this.getAttribute("value"), this.getAttribute("name"));
-    }
-
-    // refetch calendar events
-    if (name === "value" && this._calendar) {
-      this._calendar.refetchEvents();
-    }
-
-    // refetch proposals
-    if (name === "proposals" && this._calendar) {
-      this.fetchProposals();
-    }
-
-    // refetch instruments
-    if (name === "instruments" && this._calendar) {
-      this.fetchInstruments();
-      this._calendar.refetchResources();
-    }
-  }
 }
 
+// Register the custom element
 customElements.define("calendar-element", CalendarElement);
