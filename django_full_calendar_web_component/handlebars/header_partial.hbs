@@ -1,0 +1,16 @@
+<div class="fc-tooltip__title-box">
+  <i class="fc-daygrid-event-dot" style="border-color: {{color}}"></i>
+  <span class="fc-tooltip__title">{{title}}</span>
+  {{#each actions}}
+    <button
+      title="{{this.label}}"
+      class="fc-tooltip__action-button"
+      data-action-index="{{@index}}"
+    >
+      <i class="fas fa-{{this.icon}}"></i>
+    </button>
+  {{/each}}
+  <button title="Close" class="fc-tooltip__action-button close-btn">
+    <i class="btn-close"></i>
+  </button>
+</div>

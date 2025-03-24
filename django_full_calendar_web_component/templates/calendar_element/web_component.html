@@ -1,20 +1,27 @@
-{% load static fc_license %}
-
+{% load static fc_license pages_tags %}
 {% if debug %}
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.15/index.global.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/web-component@6.1.15/index.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.15/index.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/web-component@6.1.15/index.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@4.7.7/dist/handlebars.js"></script>
 {% else %}
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.15/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/web-component@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/web-component@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@4.7.7/dist/handlebars.min.js"></script>
 {% endif %}
 {% get_fc_license as fc_license_key %}
-{% if fc_license_key %}
-<script>
-    window.__FC_LICENSE_KEY = "{{ fc_license_key }}";
-</script>
-{% endif %}
-
+{% if fc_license_key %}<script>window.__FC_LICENSE_KEY = "{{ fc_license_key }}";</script>{% endif %}
 <script src="{% static "fullcalendar/js/base-tooltip.js" %}"></script>
 <script src="{% static "fullcalendar/js/fc-tooltip.js" %}"></script>
 <script src="{% static "fullcalendar/js/web-component.js" %}"></script>
 <link rel="stylesheet" href="{% static "fullcalendar/css/theme.css" %}" />
+<!-- Handlebars Partials -->
+<script data-component="fctooltip" data-type="partial" data-name="headerPartial" type="text/x-handlebars-template">
+    {% include_handlebars_template "header_partial.hbs" %}
+</script>
+<!-- Handlebars Templates -->
+<script data-component="fctooltip" data-type="template" data-name="infoView" type="text/x-handlebars-template">
+    {% include_handlebars_template "info_view.hbs" %}
+</script>
+<script data-component="fctooltip" data-type="template" data-name="editView" type="text/x-handlebars-template">
+    {% include_handlebars_template "edit_view.hbs" %}
+</script>

@@ -8,6 +8,8 @@ class FCTooltip extends BaseTooltip {
     minute: "2-digit",
   };
 
+  static templates = null;
+
   eventInfo = null;
   extraInfo = null;
   permissions = null;
@@ -20,11 +22,40 @@ class FCTooltip extends BaseTooltip {
     this.eventInfo = eventInfo;
     this.extraInfo = extraInfo;
     this.permissions = permissions;
+
+    // Initialize templates
+    this.initTemplates();
+
     this.createTooltip();
     this.setupTooltipListeners();
 
     const instanceId = eventInfo._instance.instanceId;
     FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;
+  }
+
+  initTemplates() {
+    // Initialize Handlebars templates only once
+    if (!FCTooltip.templates) {
+      FCTooltip.templates = {};
+
+      // Register all partials first
+      const partials = document.querySelectorAll(
+        'script[data-component="fctooltip"][data-type="partial"]'
+      );
+      partials.forEach((partial) => {
+        const name = partial.getAttribute("data-name");
+        Handlebars.registerPartial(name, partial.innerHTML);
+      });
+
+      // Then compile all templates
+      const templates = document.querySelectorAll(
+        'script[data-component="fctooltip"][data-type="template"]'
+      );
+      templates.forEach((template) => {
+        const name = template.getAttribute("data-name");
+        FCTooltip.templates[name] = Handlebars.compile(template.innerHTML);
+      });
+    }
   }
 
   static getInstance(eventInfo) {
@@ -57,7 +88,7 @@ class FCTooltip extends BaseTooltip {
     }
   }
 
-  // Template for the info view
+  // Template for the info view using Handlebars
   renderInfoView() {
     const { eventInfo, extraInfo, permissions } = this;
 
@@ -93,102 +124,71 @@ class FCTooltip extends BaseTooltip {
       });
     }
 
-    // Create header template
-    const header = this.createHeader(
-      eventInfo.title,
-      eventInfo.backgroundColor,
-      actions
-    );
-    this.tooltip.appendChild(header);
+    this.tooltip.innerHTML = FCTooltip.templates.infoView({
+      title: eventInfo.title,
+      color: eventInfo.backgroundColor,
+      actions: actions,
+      extraInfo: extraInfo,
+      startDate: startDate,
+      endDate: endDate,
+    });
 
-    // Create body template
-    const body = document.createElement("div");
-    body.className = "fc-tooltip__body";
-
-    body.innerHTML = `
-      <b>Type:</b> ${extraInfo.type || ""}<br>
-      ${
-        extraInfo.proposal
-          ? `<b>Proposal:</b> ${
-              extraInfo.proposal.url
-                ? `<a href="${extraInfo.proposal.url}">${extraInfo.proposal.title}</a>`
-                : extraInfo.proposal.title
-            }<br>`
-          : ""
+    // Add event listeners to action buttons
+    actions.forEach((action, index) => {
+      const actionButton = this.tooltip.querySelector(
+        `[data-action-index="${index}"]`
+      );
+      if (actionButton) {
+        actionButton.addEventListener("click", (e) => {
+          e.stopPropagation();
+          action.callback();
+        });
       }
-      ${
-        extraInfo.instrument
-          ? `<b>Instrument:</b> ${
-              extraInfo.instrument.url
-                ? `<a href="${extraInfo.instrument.url}">${extraInfo.instrument.title}</a>`
-                : extraInfo.instrument.title
-            }<br>`
-          : ""
-      }
-      <b>From:</b> ${startDate}<br>
-      <b>To:</b> ${endDate}
-    `;
+    });
 
-    this.tooltip.appendChild(body);
+    // Add close button handler
+    const closeButton = this.tooltip.querySelector(".close-btn");
+    if (closeButton) {
+      closeButton.addEventListener("click", () => this.hideTooltip());
+    }
   }
 
-  // Template for the edit view
+  // Template for the edit view using Handlebars
   renderEditView() {
     // Clear previous content
     this.tooltip.innerHTML = "";
-
-    // Create header with cancel action
-    const header = this.createHeader(
-      "Edit Event",
-      this.eventInfo.backgroundColo
-    );
-
-    this.tooltip.appendChild(header);
-
-    // Create edit form
-    const form = document.createElement("form");
-    form.className = "fc-tooltip__body";
 
     // Format dates for input fields
     const formatDateTimeForInput = (date) => {
       return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
     };
 
-    // Form with only start and end date fields
-    form.innerHTML = `
-      <div>
-        <label class="m-0">Start Date</label>
-        <input type="datetime-local" class="form-control" id="event-start" value="${formatDateTimeForInput(
-          this.eventInfo.start
-        )}">
-      </div>
-      <div>
-        <label class="m-0">End Date</label>
-        <input type="datetime-local" class="form-control" id="event-end" value="${formatDateTimeForInput(
-          this.eventInfo.end
-        )}">
-      </div>
-      <div class="d-flex justify-content-between mt-2 mb-1">
-        <button type="button" class="btn btn-primary btn-sm" id="save-btn">Save Changes</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="cancel-btn">Cancel</button>
-      </div>
-    `;
+    this.tooltip.innerHTML = FCTooltip.templates.editView({
+      color: this.eventInfo.backgroundColor,
+      actions: [], // No actions for edit view
+      startDateInput: formatDateTimeForInput(this.eventInfo.start),
+      endDateInput: formatDateTimeForInput(this.eventInfo.end),
+    });
 
-    // Add save button handler
+    // Add close button handler
+    const closeButton = this.tooltip.querySelector(".close-btn");
+    if (closeButton) {
+      closeButton.addEventListener("click", () => this.hideTooltip());
+    }
+
+    // Add form button handlers
+    const form = this.tooltip.querySelector("form");
     const saveButton = form.querySelector("#save-btn");
     saveButton.addEventListener("click", (e) => {
       e.preventDefault();
       this.handleSaveEvent(form);
     });
 
-    // Add cancel button handler
     const cancelButton = form.querySelector("#cancel-btn");
     cancelButton.addEventListener("click", (e) => {
       e.preventDefault();
       this.setState({ viewMode: "info" });
     });
-
-    this.tooltip.appendChild(form);
   }
 
   // Handler for saving event changes
@@ -249,57 +249,9 @@ class FCTooltip extends BaseTooltip {
     }
   }
 
-  // Helper method to create the header section
-  createHeader(title, color, actions = []) {
-    const titleBox = document.createElement("div");
-    titleBox.className = "fc-tooltip__title-box";
-
-    const colorDot = document.createElement("i");
-    colorDot.className = "fc-daygrid-event-dot";
-    colorDot.style.borderColor = color;
-    titleBox.append(colorDot);
-
-    const titleSpan = document.createElement("span");
-    titleSpan.className = "fc-tooltip__title";
-    titleSpan.textContent = title;
-    titleBox.appendChild(titleSpan);
-
-    // Add action buttons
-    actions.forEach((action) => {
-      const actionButton = document.createElement("button");
-      actionButton.title = action.label;
-      actionButton.className = "fc-tooltip__action-button";
-      actionButton.innerHTML = `<i class='fas fa-${action.icon}'></i>`;
-      actionButton.addEventListener("click", (e) => {
-        e.stopPropagation();
-        action.callback();
-      });
-      titleBox.appendChild(actionButton);
-    });
-
-    // Always add close button
-    const closeButton = document.createElement("button");
-    closeButton.title = "Close";
-    closeButton.className = "fc-tooltip__action-button";
-    closeButton.innerHTML = "<i class='btn-close'></i>";
-    closeButton.addEventListener("click", () => {
-      this.hideTooltip();
-    });
-    titleBox.appendChild(closeButton);
-
-    return titleBox;
-  }
-
   // Update state and re-render
   setState(newState) {
     this.state = { ...this.state, ...newState };
-    this.render();
-  }
-
-  update(eventInfo, extraInfo) {
-    this.eventInfo = eventInfo;
-    this.extraInfo = extraInfo;
-    // Re-render with updated data
     this.render();
   }
 

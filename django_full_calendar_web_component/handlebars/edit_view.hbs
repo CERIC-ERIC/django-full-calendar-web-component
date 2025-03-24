@@ -1,0 +1,21 @@
+{{> headerPartial title="Edit Event" color=color actions=actions}}
+<form class="fc-tooltip__body">
+  <div>
+    <label class="m-0">Start Date</label>
+    <input type="datetime-local"
+           class="form-control"
+           id="event-start"
+           value="{{startDateInput}}">
+  </div>
+  <div>
+    <label class="m-0">End Date</label>
+    <input type="datetime-local"
+           class="form-control"
+           id="event-end"
+           value="{{endDateInput}}">
+  </div>
+  <div class="d-flex justify-content-between mt-2 mb-1">
+    <button type="button" class="btn btn-primary btn-sm" id="save-btn">Save Changes</button>
+    <button type="button" class="btn btn-secondary btn-sm" id="cancel-btn">Cancel</button>
+  </div>
+</form>

@@ -1,0 +1,28 @@
+{{> headerPartial title=title color=color actions=actions}}
+<div class="fc-tooltip__body">
+  <b>Type:</b> {{extraInfo.type}}
+  <br>
+  {{#if extraInfo.proposal }}
+    <b>Proposal:</b>
+    {{#if extraInfo.proposal.url }}
+      <a href="{{extraInfo.proposal.url}}">{{extraInfo.proposal.title}}</a>
+      <br>
+    {{else}}
+      {{extraInfo.proposal.title}}
+      <br>
+    {{/if}}
+  {{/if}}
+  {{#if extraInfo.instrument }}
+    <b>Instrument:</b>
+    {{#if extraInfo.instrument.url }}
+      <a href="{{extraInfo.instrument.url}}">{{extraInfo.instrument.title}}</a>
+      <br>
+    {{else}}
+      {{extraInfo.instrument.title}}
+      <br>
+    {{/if}}
+  {{/if}}
+  <b>From:</b> {{startDate}}
+  <br>
+  <b>To:</b> {{endDate}}
+</div>
