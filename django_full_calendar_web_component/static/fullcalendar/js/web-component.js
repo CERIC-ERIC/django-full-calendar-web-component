@@ -329,7 +329,7 @@ class CalendarElement extends HTMLElement {
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
       const instrumentId = info.event.getResources()?.[0]?.id.toString();
-      const instrument = this._instruments.find((i) => i.id === instrumentId);
+      const instrument = instrumentId ? this._instruments.find((i) => `${i.id}` === instrumentId) : null;
 
       const proposal = this._proposals.find(
         (p) => p.id === info.event.extendedProps.proposal
