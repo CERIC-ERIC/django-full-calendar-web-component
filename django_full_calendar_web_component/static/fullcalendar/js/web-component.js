@@ -53,15 +53,24 @@ class CalendarElement extends HTMLElement {
   };
 
   /**
-   * Initialize component state
+   * The FullCalendar instance
    */
-  constructor() {
-    super(...arguments);
-    this._calendar = null;
-    this._input = null;
-    this._proposals = [];
-    this._instruments = [];
-  }
+  _calendar = null;
+
+  /**
+   * The hidden input element, to be used in forms
+   */
+  _input = null;
+
+  /**
+   * Array of proposal objects, used to color events and get extra proposal data
+   */
+  _proposals = [];
+
+  /**
+   * Array of instrument objects, used to create resources and to get extra instrument data
+   */
+  _instruments = [];
 
   //==============================================================
   // HTML ELEMENT LIFECYCLE METHODS
@@ -72,9 +81,12 @@ class CalendarElement extends HTMLElement {
    * Initialize the calendar and data
    */
   connectedCallback() {
+    // Populate instruments and proposals data from attributes
     this.fetchInstruments();
     this.fetchProposals();
+    // Initialize the calendar with options
     this.handleOptions(this.getAttribute("options"));
+    // Initialize the hidden input
     this.handleValue(this.getAttribute("value"), this.getAttribute("name"));
   }
 
@@ -260,6 +272,7 @@ class CalendarElement extends HTMLElement {
       eventDidMount: this.handleEventDidMount,
       eventWillUnmount: this.handleEventWillUnmount,
       eventChange: this.handleEventChange,
+      eventRemove: this.handleEventRemove,
 
       // === Display options ===
       initialView: this._options.initialView,
@@ -322,16 +335,6 @@ class CalendarElement extends HTMLElement {
         (p) => p.id === info.event.extendedProps.proposal
       );
 
-      // Add event listeners for tooltip custom events
-      info.el.addEventListener("fc:event-delete", (e) => {
-        this.deleteEvent(e.detail.eventId);
-      });
-
-      info.el.addEventListener("fc:event-updated", (e) => {
-        // If we need any additional logic beyond what FullCalendar already handles
-        // We can add it here
-      });
-
       new FCTooltip(
         info.el,
         info.event,
@@ -385,24 +388,32 @@ class CalendarElement extends HTMLElement {
     );
   };
 
+  /**
+   * Called when an event is removed from the calendar
+   * Removes the event from the underlying data
+   */
+  handleEventRemove = (removeInfo) => {
+    const events = JSON.parse(this.getAttribute("value"));
+    const eventIndex = events.findIndex(
+      (e) => `${e.id}` === `${removeInfo.event.id}`
+    );
+
+    events.splice(eventIndex, 1);
+
+    this.setAttribute("value", JSON.stringify(events));
+
+    // dispatch custom event and bubble it up
+    this.dispatchEvent(
+      new CustomEvent("remove", {
+        bubbles: true,
+        detail: { removeInfo },
+      })
+    );
+  };
+
   //==============================================================
   // EVENT MANIPULATION METHODS
   //==============================================================
-
-  /**
-   * Placeholder for event editing functionality
-   */
-  editEvent = (eventId) => {};
-
-  /**
-   * Delete an event after confirmation
-   */
-  deleteEvent = (eventId) => {
-    const events = JSON.parse(this.getAttribute("value"));
-    const eventIndex = events.findIndex((e) => `${e.id}` === `${eventId}`);
-    events.splice(eventIndex, 1);
-    this.setAttribute("value", JSON.stringify(events));
-  };
 
   /**
    * Add a new event to the calendar

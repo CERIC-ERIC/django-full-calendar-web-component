@@ -149,5 +149,4 @@ You can customize these templates in the `handlebars/` directory.
 The component emits the following custom events:
 
 - **change**: Fired when an event is moved or resized
-- **fc:event-delete**: Fired when an event is deleted via the tooltip
-- **fc:event-updated**: Fired when an event is updated via the tooltip
+- **remove**: Fired when an event is deleted

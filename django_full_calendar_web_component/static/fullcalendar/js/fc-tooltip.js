@@ -10,12 +10,37 @@ class FCTooltip extends BaseTooltip {
 
   static templates = null;
 
+  static getInstance(eventInfo) {
+    const instanceId = eventInfo._instance.instanceId;
+    return FCTooltip.TOOLTIP_INSTANCES[instanceId] || null;
+  }
+
+  static disposeAll() {
+    Object.values(FCTooltip.TOOLTIP_INSTANCES).forEach((tooltip) =>
+      tooltip.dispose(),
+    );
+  }
+
+  /**
+   * The event instance from FullCalendar
+   */
   eventInfo = null;
+
+  /**
+   * Extra information to display in the tooltip
+   */
   extraInfo = null;
+
+  /**
+   * Permissions for the current user, used to determine available actions
+   */
   permissions = null;
 
   _viewMode = "info";
 
+  /**
+   * The current view mode of the tooltip, either "info" or "edit"
+   */
   get viewMode() {
     return this._viewMode;
   }
@@ -34,9 +59,11 @@ class FCTooltip extends BaseTooltip {
     // Initialize templates
     this.initTemplates();
 
+    // Create tooltip and setup listeners
     this.createTooltip();
     this.setupTooltipListeners();
 
+    // Store instance in static map for easy access
     const instanceId = eventInfo._instance.instanceId;
     FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;
   }
@@ -48,7 +75,7 @@ class FCTooltip extends BaseTooltip {
 
       // Register all partials first
       const partials = document.querySelectorAll(
-        'script[data-component="fctooltip"][data-type="partial"]'
+        'script[data-component="fctooltip"][data-type="partial"]',
       );
       partials.forEach((partial) => {
         const name = partial.getAttribute("data-name");
@@ -57,24 +84,13 @@ class FCTooltip extends BaseTooltip {
 
       // Then compile all templates
       const templates = document.querySelectorAll(
-        'script[data-component="fctooltip"][data-type="template"]'
+        'script[data-component="fctooltip"][data-type="template"]',
       );
       templates.forEach((template) => {
         const name = template.getAttribute("data-name");
         FCTooltip.templates[name] = Handlebars.compile(template.innerHTML);
       });
     }
-  }
-
-  static getInstance(eventInfo) {
-    const instanceId = eventInfo._instance.instanceId;
-    return FCTooltip.TOOLTIP_INSTANCES[instanceId] || null;
-  }
-
-  static disposeAll() {
-    Object.values(FCTooltip.TOOLTIP_INSTANCES).forEach((tooltip) =>
-      tooltip.dispose()
-    );
   }
 
   createTooltip() {
@@ -102,12 +118,12 @@ class FCTooltip extends BaseTooltip {
 
     const startDate = FullCalendar.formatDate(
       eventInfo.start,
-      FCTooltip.DATE_FORMAT
+      FCTooltip.DATE_FORMAT,
     );
 
     const endDate = FullCalendar.formatDate(
       eventInfo.end,
-      FCTooltip.DATE_FORMAT
+      FCTooltip.DATE_FORMAT,
     );
 
     // Clear previous content
@@ -146,7 +162,7 @@ class FCTooltip extends BaseTooltip {
     // Add event listeners to action buttons
     actions.forEach((action, index) => {
       const actionButton = this.tooltip.querySelector(
-        `[data-action-index="${index}"]`
+        `[data-action-index="${index}"]`,
       );
       if (actionButton) {
         actionButton.addEventListener("click", (e) => {
@@ -225,18 +241,6 @@ class FCTooltip extends BaseTooltip {
     // Update event dates using FullCalendar API
     this.eventInfo.setDates(newStart, newEnd);
 
-    // Dispatch custom event for external listeners
-    this.eventElem.dispatchEvent(
-      new CustomEvent("fc:event-updated", {
-        bubbles: true,
-        detail: {
-          eventId: this.eventInfo.id,
-          newStart,
-          newEnd,
-        },
-      })
-    );
-
     // Switch back to info view
     this.viewMode = "info";
   }
@@ -245,14 +249,7 @@ class FCTooltip extends BaseTooltip {
   handleDeleteEvent() {
     if (window.confirm("Are you sure you want to delete this event?")) {
       // Dispatch a custom event for deletion
-      this.eventElem.dispatchEvent(
-        new CustomEvent("fc:event-delete", {
-          bubbles: true,
-          detail: {
-            eventId: this.eventInfo.id,
-          },
-        })
-      );
+      this.eventInfo.remove();
 
       // Hide tooltip after deletion request
       this.hideTooltip();
