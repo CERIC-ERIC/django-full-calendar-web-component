@@ -328,7 +328,7 @@ class CalendarElement extends HTMLElement {
   handleEventDidMount = (info) => {
     // only handle tooltips for non-mirror events
     if (!info.isMirror) {
-      const instrumentId = info.event.getResources().map((r) => `${r.id}`)[0];
+      const instrumentId = info.event.getResources()?.[0]?.id.toString();
       const instrument = this._instruments.find((i) => i.id === instrumentId);
 
       const proposal = this._proposals.find(
