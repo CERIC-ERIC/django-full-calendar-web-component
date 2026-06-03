@@ -199,6 +199,13 @@ class CalendarElement extends HTMLElement {
       extendedProps: {},
       classNames: ["fc-event-clickable"],
     };
+    if (event.executed_remotely) {
+      newEvent.extendedProps = {
+        ...newEvent.extendedProps,
+        executedRemotely: event.executed_remotely,
+      };
+      newEvent.classNames = [...newEvent.classNames, "event--remote"];
+    }
 
     if (event.instrument) {
       // instrument id is used as resourceId
@@ -247,6 +254,10 @@ class CalendarElement extends HTMLElement {
         : event.title;
     }
 
+    /* if (event.executed_remotely) {
+      newEvent.title = `🌐 Remote · ${newEvent.title}`;
+    } */
+
     return newEvent;
   };
 
@@ -273,6 +284,7 @@ class CalendarElement extends HTMLElement {
       eventWillUnmount: this.handleEventWillUnmount,
       eventChange: this.handleEventChange,
       eventRemove: this.handleEventRemove,
+      eventContent: this.renderEventContent,
 
       // === Display options ===
       initialView: this._options.initialView,
@@ -321,6 +333,28 @@ class CalendarElement extends HTMLElement {
   // EVENT HANDLING METHODS
   //==============================================================
 
+
+    /**
+   * Render event content with optional remote badge
+   */
+  renderEventContent = (arg) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "fc-event-custom-content";
+
+    if (arg.event.extendedProps.executedRemotely) {
+      const badge = document.createElement("span");
+      badge.className = "fc-event-badge fc-event-badge--remote";
+      badge.textContent = "Remote";
+      wrapper.appendChild(badge);
+    }
+
+    const title = document.createElement("span");
+    title.className = "fc-event-custom-title";
+    title.textContent = arg.event.title;
+    wrapper.appendChild(title);
+
+    return { domNodes: [wrapper] };
+  };
   /**
    * Called when an event is added to the DOM
    * Sets up tooltips and event listeners
@@ -342,6 +376,7 @@ class CalendarElement extends HTMLElement {
           type: info.event.extendedProps.type,
           instrument,
           proposal,
+          executedRemotely: info.event.extendedProps.executedRemotely,
         },
         {
           canEdit: this._options.hasChangePermission,

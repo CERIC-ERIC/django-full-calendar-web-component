@@ -2,6 +2,10 @@
 <div class="fc-tooltip__body">
   <b>Type:</b> {{extraInfo.type}}
   <br>
+  {{#if extraInfo.executedRemotely }}
+    <b>Executed remotely:</b> Yes
+    <br>
+  {{/if}}
   {{#if extraInfo.proposal }}
     <b>Proposal:</b>
     {{#if extraInfo.proposal.url }}
