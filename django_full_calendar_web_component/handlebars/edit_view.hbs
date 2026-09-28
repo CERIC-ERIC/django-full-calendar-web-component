@@ -14,6 +14,32 @@
            id="event-end"
            value="{{endDateInput}}">
   </div>
+  <div>                                                                                                                               │
+    <label class="m-0">Extra experimental hours</label>                                                                               │
+    <input type="number"                                                                                                              │
+           class="form-control"                                                                                                       │
+           id="event-extra-experimental-hours"                                                                                        │
+           value="{{extra_experimental_hours}}">                                                                                      │
+  </div>                                                                                                                              │
+  <div>                                                                                                                               │
+    <label class="m-0">Sample preparation hours</label>                                                                               │
+    <input type="number"                                                                                                              │
+           class="form-control"                                                                                                       │
+           id="event-sample-preparation-hours"                                                                                        │
+           value="{{sample_preparation_hours}}">                                                                                      │
+  </div>                                                                                                                              │
+  <div>                                                                                                                               │
+    <label class="m-0">Data analysis hours</label>                                                                                    │
+    <input type="number"                                                                                                              │
+           class="form-control"                                                                                                       │
+           id="event-data-analysis-hours"                                                                                             │
+           value="{{data_analysis_hours}}">                                                                                           │
+  </div>                                                                                                                              │
+  <div>                                                                                                                               │
+    <label class="m-0">Note</label>                                                                                                   │
+    <textarea class="form-control"                                                                                                    │
+          id="event-note">{{note}}</textarea>
+  </div>
   <div class="d-flex justify-content-between mt-2 mb-1">
     <button type="button" class="btn btn-primary btn-sm" id="save-btn">Save Changes</button>
     <button type="button" class="btn btn-secondary btn-sm" id="cancel-btn">Cancel</button>

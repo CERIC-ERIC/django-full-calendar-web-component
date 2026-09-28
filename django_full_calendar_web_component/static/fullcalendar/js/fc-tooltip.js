@@ -194,6 +194,10 @@ class FCTooltip extends BaseTooltip {
       actions: [], // No actions for edit view
       startDateInput: formatDateTimeForInput(this.eventInfo.start),
       endDateInput: formatDateTimeForInput(this.eventInfo.end),
+      extra_experimental_hours: this.eventInfo.extendedProps.extra_experimental_hours,
+      sample_preparation_hours: this.eventInfo.extendedProps.sample_preparation_hours,
+      data_analysis_hours: this.eventInfo.extendedProps.data_analysis_hours,
+      note: this.eventInfo.extendedProps.note,
     });
 
     // Add close button handler
@@ -222,6 +226,10 @@ class FCTooltip extends BaseTooltip {
     // Get form values
     const startInput = form.querySelector("#event-start").value;
     const endInput = form.querySelector("#event-end").value;
+    const extra_experimental_hours = form.querySelector("#event-extra-experimental-hours").value;                                        │
+    const sample_preparation_hours = form.querySelector("#event-sample-preparation-hours").value;
+    const data_analysis_hours = form.querySelector("#event-data-analysis-hours").value;
+    const note = form.querySelector("#event-note").value;
 
     // Validate dates
     if (!startInput || !endInput) {
@@ -240,6 +248,10 @@ class FCTooltip extends BaseTooltip {
 
     // Update event dates using FullCalendar API
     this.eventInfo.setDates(newStart, newEnd);
+    this.eventInfo.setExtendedProp("extra_experimental_hours", extra_experimental_hours);                    │
+    this.eventInfo.setExtendedProp("sample_preparation_hours", sample_preparation_hours);                    │
+    this.eventInfo.setExtendedProp("data_analysis_hours", data_analysis_hours);                              │
+    this.eventInfo.setExtendedProp("note", note);
 
     // Switch back to info view
     this.viewMode = "info";

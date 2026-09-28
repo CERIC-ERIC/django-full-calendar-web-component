@@ -20,7 +20,7 @@ class CalendarElement extends HTMLElement {
    * Color palette for different events
    */
   static EVENT_COLORS = [
-    "#2196f3",
+    "#17a2b8",
     "#009688",
     "#ff9800",
     "#9c27b0",
