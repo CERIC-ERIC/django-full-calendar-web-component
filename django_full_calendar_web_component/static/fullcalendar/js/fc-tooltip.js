@@ -50,11 +50,12 @@ class FCTooltip extends BaseTooltip {
     this.render(); // Directly call render when value changes
   }
 
-  constructor(el, eventInfo, extraInfo, permissions) {
+  constructor(el, eventInfo, extraInfo, permissions, calendarElement) {
     super(el);
     this.eventInfo = eventInfo;
     this.extraInfo = extraInfo;
     this.permissions = permissions;
+    this.calendarElement = calendarElement || el?.closest?.("calendar-element");
 
     // Initialize templates
     this.initTemplates();
@@ -194,10 +195,10 @@ class FCTooltip extends BaseTooltip {
       actions: [], // No actions for edit view
       startDateInput: formatDateTimeForInput(this.eventInfo.start),
       endDateInput: formatDateTimeForInput(this.eventInfo.end),
-      extra_experimental_hours: this.eventInfo.extendedProps.extra_experimental_hours,
-      sample_preparation_hours: this.eventInfo.extendedProps.sample_preparation_hours,
-      data_analysis_hours: this.eventInfo.extendedProps.data_analysis_hours,
-      note: this.eventInfo.extendedProps.note,
+      extra_experimental_hours: this.eventInfo.extendedProps?.extra_experimental_hours ?? 0,
+      sample_preparation_hours: this.eventInfo.extendedProps?.sample_preparation_hours ?? 0,
+      data_analysis_hours: this.eventInfo.extendedProps?.data_analysis_hours ?? 0,
+      note: this.eventInfo.extendedProps?.note ?? "",
     });
 
     // Add close button handler
@@ -246,12 +247,34 @@ class FCTooltip extends BaseTooltip {
       return;
     }
 
-    // Update event dates using FullCalendar API
-    this.eventInfo.setDates(newStart, newEnd);
-    this.eventInfo.setExtendedProp("extra_experimental_hours", extra_experimental_hours);
-    this.eventInfo.setExtendedProp("sample_preparation_hours", sample_preparation_hours);
-    this.eventInfo.setExtendedProp("data_analysis_hours", data_analysis_hours);
-    this.eventInfo.setExtendedProp("note", note);
+    const extra_hours = extra_experimental_hours ? parseInt(extra_experimental_hours, 10) : 0;
+    const prep_hours = sample_preparation_hours ? parseInt(sample_preparation_hours, 10) : 0;
+    const analysis_hours = data_analysis_hours ? parseInt(data_analysis_hours, 10) : 0;
+
+    const calendar = this.calendarElement || this.eventElem?.closest("calendar-element");
+
+    // Suppress intermediate eventChange triggers during batch property updates
+    if (calendar) {
+      calendar._suppressEventChange = true;
+    }
+
+    try {
+      // Update event dates using FullCalendar API
+      this.eventInfo.setDates(newStart, newEnd);
+      this.eventInfo.setExtendedProp("extra_experimental_hours", extra_hours);
+      this.eventInfo.setExtendedProp("sample_preparation_hours", prep_hours);
+      this.eventInfo.setExtendedProp("data_analysis_hours", analysis_hours);
+      this.eventInfo.setExtendedProp("note", note);
+    } finally {
+      if (calendar) {
+        calendar._suppressEventChange = false;
+      }
+    }
+
+    // Trigger a single consolidated eventChange
+    if (calendar && typeof calendar.handleEventChange === "function") {
+      calendar.handleEventChange({ event: this.eventInfo });
+    }
 
     // Switch back to info view
     this.viewMode = "info";

@@ -61,11 +61,15 @@ class BaseTooltip {
   }
 
   hideTooltip() {
-    this.tooltip.classList.remove("fc-tooltip--show");
-    this.removeListeners();
-    window.setTimeout(() => {
-      this.tooltip.removeAttribute("style");
-    }, BaseTooltip.TRANSITION_DURATION);
+    if (this.tooltip) {
+      this.tooltip.classList.remove("fc-tooltip--show");
+      this.removeListeners();
+      window.setTimeout(() => {
+        if (this.tooltip) {
+          this.tooltip.removeAttribute("style");
+        }
+      }, BaseTooltip.TRANSITION_DURATION);
+    }
   }
 
   handleClickOutside = (event) => {
