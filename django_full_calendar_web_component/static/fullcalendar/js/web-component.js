@@ -118,6 +118,8 @@ class CalendarElement extends HTMLElement {
 
     // refetch calendar events
     if (name === "value" && this._calendar) {
+    // refetch calendar events only if value was modified externally
+    if (name === "value" && this._calendar && !this._isInternalValueChange) {
       this._calendar.refetchEvents();
     }
 
@@ -399,7 +401,8 @@ class CalendarElement extends HTMLElement {
         {
           canEdit: this._options.hasChangePermission,
           canDelete: this._options.hasDeletePermission,
-        }
+        },
+        this
       );
     }
   };
@@ -420,15 +423,22 @@ class CalendarElement extends HTMLElement {
    * Updates the underlying data
    */
   handleEventChange = (changeInfo) => {
+    if (this._suppressEventChange) return;
+    if (!changeInfo?.event?.id) return;
+
     // write changes into the attribute
     const events = JSON.parse(this.getAttribute("value"));
     const eventIndex = events.findIndex(
       (e) => `${e.id}` === `${changeInfo.event.id}`
     );
 
-    // only update start and end as ISO strings
-    events[eventIndex].start = changeInfo.event.start.toISOString();
-    events[eventIndex].end = changeInfo.event.end.toISOString();
+    if (eventIndex === -1) return;
+
+    // update start and end as ISO strings
+    const start = changeInfo.event.start instanceof Date ? changeInfo.event.start.toISOString() : (changeInfo.event.startStr || changeInfo.event.start);
+    const end = changeInfo.event.end instanceof Date ? changeInfo.event.end.toISOString() : (changeInfo.event.endStr || changeInfo.event.end);
+    events[eventIndex].start = start;
+    events[eventIndex].end = end;
 
     if (changeInfo.event.extendedProps) {
       if (events[eventIndex].extendedProps) {
@@ -451,7 +461,12 @@ class CalendarElement extends HTMLElement {
       }
     }
 
-    this.setAttribute("value", JSON.stringify(events));
+    this._isInternalValueChange = true;
+    try {
+      this.setAttribute("value", JSON.stringify(events));
+    } finally {
+      this._isInternalValueChange = false;
+    }
 
     // dispatch custom event and bubble it up
     this.dispatchEvent(
