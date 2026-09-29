@@ -196,7 +196,25 @@ class CalendarElement extends HTMLElement {
       id: `${event.id}`,
       start: event.start,
       end: event.end,
-      extendedProps: {},
+      extendedProps: {
+        ...(event.extendedProps || {}),
+        extra_experimental_hours:
+          event.extra_experimental_hours !== undefined
+            ? event.extra_experimental_hours
+            : event.extendedProps?.extra_experimental_hours,
+        sample_preparation_hours:
+          event.sample_preparation_hours !== undefined
+            ? event.sample_preparation_hours
+            : event.extendedProps?.sample_preparation_hours,
+        data_analysis_hours:
+          event.data_analysis_hours !== undefined
+            ? event.data_analysis_hours
+            : event.extendedProps?.data_analysis_hours,
+        note:
+          event.note !== undefined
+            ? event.note
+            : event.extendedProps?.note,
+      },
       classNames: ["fc-event-clickable"],
     };
     if (event.executed_remotely) {
@@ -411,6 +429,27 @@ class CalendarElement extends HTMLElement {
     // only update start and end as ISO strings
     events[eventIndex].start = changeInfo.event.start.toISOString();
     events[eventIndex].end = changeInfo.event.end.toISOString();
+
+    if (changeInfo.event.extendedProps) {
+      if (events[eventIndex].extendedProps) {
+        events[eventIndex].extendedProps = {
+          ...events[eventIndex].extendedProps,
+          ...changeInfo.event.extendedProps,
+        };
+      }
+      if (changeInfo.event.extendedProps.extra_experimental_hours !== undefined) {
+        events[eventIndex].extra_experimental_hours = changeInfo.event.extendedProps.extra_experimental_hours;
+      }
+      if (changeInfo.event.extendedProps.sample_preparation_hours !== undefined) {
+        events[eventIndex].sample_preparation_hours = changeInfo.event.extendedProps.sample_preparation_hours;
+      }
+      if (changeInfo.event.extendedProps.data_analysis_hours !== undefined) {
+        events[eventIndex].data_analysis_hours = changeInfo.event.extendedProps.data_analysis_hours;
+      }
+      if (changeInfo.event.extendedProps.note !== undefined) {
+        events[eventIndex].note = changeInfo.event.extendedProps.note;
+      }
+    }
 
     this.setAttribute("value", JSON.stringify(events));
 

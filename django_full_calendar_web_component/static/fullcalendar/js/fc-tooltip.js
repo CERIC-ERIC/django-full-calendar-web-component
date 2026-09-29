@@ -226,7 +226,7 @@ class FCTooltip extends BaseTooltip {
     // Get form values
     const startInput = form.querySelector("#event-start").value;
     const endInput = form.querySelector("#event-end").value;
-    const extra_experimental_hours = form.querySelector("#event-extra-experimental-hours").value;                                        │
+    const extra_experimental_hours = form.querySelector("#event-extra-experimental-hours").value;
     const sample_preparation_hours = form.querySelector("#event-sample-preparation-hours").value;
     const data_analysis_hours = form.querySelector("#event-data-analysis-hours").value;
     const note = form.querySelector("#event-note").value;
@@ -248,9 +248,9 @@ class FCTooltip extends BaseTooltip {
 
     // Update event dates using FullCalendar API
     this.eventInfo.setDates(newStart, newEnd);
-    this.eventInfo.setExtendedProp("extra_experimental_hours", extra_experimental_hours);                    │
-    this.eventInfo.setExtendedProp("sample_preparation_hours", sample_preparation_hours);                    │
-    this.eventInfo.setExtendedProp("data_analysis_hours", data_analysis_hours);                              │
+    this.eventInfo.setExtendedProp("extra_experimental_hours", extra_experimental_hours);
+    this.eventInfo.setExtendedProp("sample_preparation_hours", sample_preparation_hours);
+    this.eventInfo.setExtendedProp("data_analysis_hours", data_analysis_hours);
     this.eventInfo.setExtendedProp("note", note);
 
     // Switch back to info view
