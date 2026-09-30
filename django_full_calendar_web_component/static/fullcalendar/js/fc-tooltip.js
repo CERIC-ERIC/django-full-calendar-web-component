@@ -117,15 +117,13 @@ class FCTooltip extends BaseTooltip {
   renderInfoView() {
     const { eventInfo, extraInfo, permissions } = this;
 
-    const startDate = FullCalendar.formatDate(
-      eventInfo.start,
-      FCTooltip.DATE_FORMAT,
-    );
+    const startDate = eventInfo.start
+      ? FullCalendar.formatDate(eventInfo.start, FCTooltip.DATE_FORMAT)
+      : "";
 
-    const endDate = FullCalendar.formatDate(
-      eventInfo.end,
-      FCTooltip.DATE_FORMAT,
-    );
+    const endDate = eventInfo.end
+      ? FullCalendar.formatDate(eventInfo.end, FCTooltip.DATE_FORMAT)
+      : "";
 
     // Clear previous content
     this.tooltip.innerHTML = "";
@@ -185,16 +183,23 @@ class FCTooltip extends BaseTooltip {
     // Clear previous content
     this.tooltip.innerHTML = "";
 
-    // Format dates for input fields
+    // Format dates for input fields safely to local YYYY-MM-DDTHH:MM
     const formatDateTimeForInput = (date) => {
-      return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
+      if (!date) return "";
+      const d = date instanceof Date ? date : new Date(date);
+      if (isNaN(d.getTime())) return "";
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
+
+    const start = this.eventInfo.start;
+    const end = this.eventInfo.end || (start ? new Date(start.getTime() + 3600000) : null);
 
     this.tooltip.innerHTML = FCTooltip.templates.editView({
       color: this.eventInfo.backgroundColor,
       actions: [], // No actions for edit view
-      startDateInput: formatDateTimeForInput(this.eventInfo.start),
-      endDateInput: formatDateTimeForInput(this.eventInfo.end),
+      startDateInput: formatDateTimeForInput(start),
+      endDateInput: formatDateTimeForInput(end),
       extra_experimental_hours: this.eventInfo.extendedProps?.extra_experimental_hours ?? 0,
       sample_preparation_hours: this.eventInfo.extendedProps?.sample_preparation_hours ?? 0,
       data_analysis_hours: this.eventInfo.extendedProps?.data_analysis_hours ?? 0,

@@ -116,8 +116,6 @@ class CalendarElement extends HTMLElement {
       this.handleValue(this.getAttribute("value"), this.getAttribute("name"));
     }
 
-    // refetch calendar events
-    if (name === "value" && this._calendar) {
     // refetch calendar events only if value was modified externally
     if (name === "value" && this._calendar && !this._isInternalValueChange) {
       this._calendar.refetchEvents();
