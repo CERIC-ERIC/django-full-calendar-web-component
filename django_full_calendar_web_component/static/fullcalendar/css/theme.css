@@ -19,22 +19,22 @@
 
 .fc-tooltip {
   min-height: 100px;
-  min-width: 260px;
-  overflow: hidden;
+  min-width: 300px;
+  max-width: 440px;
   position: absolute;
   top: -9999px;
   left: -9999px;
   display: flex;
   flex-direction: column;
-  border-radius: 4px;
+  border-radius: 8px;
   z-index: 9999;
-  gap: -1px;
   font-size: 14px;
-  border: 1px solid #cccccc;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.18), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 
-  transition: none 100ms ease-in-out;
-  transition-property: visibility, opacity;
+  transition: visibility 120ms ease-in-out, opacity 120ms ease-in-out;
   visibility: hidden;
   opacity: 0;
 }
@@ -46,57 +46,131 @@
 
 .fc-tooltip__title-box {
   display: flex;
-  background-color: #fafafa;
-  color: black;
-  box-shadow: 0px 1px 0px 0px #dddddd;
-  padding: 0 4px 0 8px;
-  overflow: hidden;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f8f9fa;
+  color: #212529;
+  border-bottom: 1px solid #e9ecef;
+  padding: 8px 12px;
   position: relative;
+  gap: 8px;
+}
+
+.fc-tooltip__title-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .fc-tooltip__title-box .fc-daygrid-event-dot {
-  margin-top: 16px;
-  margin-right: 8px;
+  flex-shrink: 0;
+  margin: 0;
 }
 
 .fc-tooltip__title {
-  flex: 1 1 auto;
-  font-weight: bold;
-  max-width: 200px;
-  margin: 10px 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #343a40;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.fc-tooltip__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .fc-tooltip__action-button {
   border: none;
   background-color: transparent;
-  font-size: 14px;
-  color: black;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  font-size: 13px;
+  color: #6c757d;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 5px 0 0 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
 }
 
 .fc-tooltip__action-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: #e9ecef;
+  color: #212529;
 }
 
 .fc-tooltip__action-button i {
   display: block;
-  opacity: 0.5 !important;
+  opacity: 0.8 !important;
 }
 
 .fc-tooltip__action-button:hover i {
-  opacity: 0.75 !important;
+  opacity: 1 !important;
+}
+
+.fc-tooltip__action-button[title*="Delete"]:hover,
+.fc-tooltip__action-button:has(.fa-trash-alt):hover,
+.fc-tooltip__action-button:has(.fa-trash):hover {
+  background-color: #fee2e2;
+  color: #dc3545;
 }
 
 .fc-tooltip__body {
   flex: 1 1 auto;
-  background-color: white;
-  padding: 4px 8px;
+  background-color: #ffffff;
+  padding: 12px 14px;
+  color: #333333;
+  line-height: 1.5;
+}
+
+.fc-tooltip__body form > div:not(:last-child),
+.fc-tooltip__body .form-group {
+  margin-bottom: 8px;
+}
+
+.fc-tooltip__body label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.fc-tooltip__body .form-control {
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  padding: 5px 9px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.fc-tooltip__body .form-control:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+  outline: 0;
+}
+
+.fc-tooltip__body textarea.form-control {
+  min-height: 56px;
+  resize: vertical;
+}
+
+.fc-tooltip__body .btn {
+  font-size: 0.825rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 5px;
 }
 
 .fc-event-clickable {
