@@ -238,14 +238,13 @@ class CalendarElement extends HTMLElement {
       };
       const proposal = this._proposals.find((p) => p.id === event.proposal);
 
-      const proposalIndex = this._proposals.indexOf(proposal);
-
-      const proposalColor = CalendarElement.getEventColor(proposalIndex);
-
-      newEvent.title = proposal.title;
-
-      newEvent.backgroundColor = proposalColor;
-      newEvent.borderColor = proposalColor;
+      if (proposal) {
+        const proposalIndex = this._proposals.indexOf(proposal);
+        const proposalColor = CalendarElement.getEventColor(proposalIndex);
+        newEvent.title = proposal.title;
+        newEvent.backgroundColor = proposalColor;
+        newEvent.borderColor = proposalColor;
+      }
     }
 
     if (event.type) {
@@ -270,6 +269,15 @@ class CalendarElement extends HTMLElement {
       newEvent.title = newEvent.title
         ? `${newEvent.title}: ${event.title}`
         : event.title;
+    }
+
+    // Fallback title and color for events without proposal or unset values
+    if (!newEvent.title) {
+      newEvent.title = event.type === "experiment" ? "Experiment" : "Event";
+    }
+    if (!newEvent.backgroundColor) {
+      newEvent.backgroundColor = CalendarElement.EVENT_COLORS[0];
+      newEvent.borderColor = CalendarElement.EVENT_COLORS[0];
     }
 
     /* if (event.executed_remotely) {
