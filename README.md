@@ -69,7 +69,12 @@ The `<calendar-element>` supports the following attributes:
     "instrument": 123,
     "proposal": 456,
     "type": "experiment",
-    "title": "Optional additional title"
+    "title": "Optional additional title",
+    "executed_remotely": false,
+    "extra_experimental_hours": 2,
+    "sample_preparation_hours": 1,
+    "data_analysis_hours": 3,
+    "note": "Sample setup completed prior to run"
   },
   {
     "id": 2,
@@ -77,10 +82,31 @@ The `<calendar-element>` supports the following attributes:
     "end": "2025-03-25T15:00:00",
     "instrument": 124,
     "type": "reserved",
-    "title": "Maintenance"
+    "title": "Maintenance",
+    "extra_experimental_hours": 0,
+    "sample_preparation_hours": 0,
+    "data_analysis_hours": 0,
+    "note": "Scheduled calibration"
   }
 ]
 ```
+
+##### Event Object Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `id` | String / Number | Unique identifier for the event. |
+| `start` | String | Start datetime in ISO 8601 format. |
+| `end` | String | End datetime in ISO 8601 format (or null/omitted for ongoing/open events). |
+| `instrument` | String / Number | Identifier of the instrument associated with the event. |
+| `type` | String | Event type: `"experiment"` or `"reserved"`. |
+| `title` | String | Optional title for the event. |
+| `proposal` | String / Number | Optional identifier of the associated proposal (for `"experiment"` type). |
+| `executed_remotely` | Boolean | Optional flag indicating if the experiment was conducted remotely. |
+| `extra_experimental_hours` | Number | Additional experimental/beamtime hours recorded for the event (default: 0). |
+| `sample_preparation_hours` | Number | Dedicated sample preparation hours (default: 0). |
+| `data_analysis_hours` | Number | Dedicated data analysis hours (default: 0). |
+| `note` | String | Optional notes or observations recorded for the event. |
 
 #### Instruments Format
 
@@ -148,5 +174,8 @@ You can customize these templates in the `handlebars/` directory.
 
 The component emits the following custom events:
 
-- **change**: Fired when an event is moved or resized
-- **remove**: Fired when an event is deleted
+- **change**: Fired when an event is moved, resized, or modified via the Edit Event popup. The event `detail` object contains:
+  - `changeInfo.event`: The updated FullCalendar event object, including `extendedProps` (`extra_experimental_hours`, `sample_preparation_hours`, `data_analysis_hours`, `note`).
+  - `changeInfo.oldEvent`: The previous state of the event before modification.
+- **remove**: Fired when an event is deleted via the Delete action button. The event `detail` object contains:
+  - `removeInfo.event`: The FullCalendar event object to be removed.
