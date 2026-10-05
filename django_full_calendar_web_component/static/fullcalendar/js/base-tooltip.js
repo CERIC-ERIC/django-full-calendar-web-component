@@ -80,7 +80,10 @@ class BaseTooltip {
     }
   };
 
-  handleScroll = () => {
+  handleScroll = (event) => {
+    if (this.tooltip && event?.target && this.tooltip.contains(event.target)) {
+      return;
+    }
     this.hideTooltip();
   };
 
