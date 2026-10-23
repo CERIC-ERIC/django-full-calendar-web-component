@@ -1,19 +1,29 @@
-.fc a {
+.fc a,
+calendar-element a {
   color: #212529 !important;
 }
 
 /* Base icon styles for events*/
-.fc .fc-event-title::before {
+.fc .fc-event-title::before,
+.fc .fc-event-custom-title::before,
+calendar-element .fc-event-title::before,
+calendar-element .fc-event-custom-title::before {
   font-family: "Font Awesome 5 Free";
   font-weight: 900;
   padding: 0 4px;
 }
 
-.fc .event--type-experiment .fc-event-title::before {
+.fc .event--type-experiment .fc-event-title::before,
+.fc .event--type-experiment .fc-event-custom-title::before,
+calendar-element .event--type-experiment .fc-event-title::before,
+calendar-element .event--type-experiment .fc-event-custom-title::before {
   content: "\f0c3";
 }
 
-.fc .event--type-reserved .fc-event-title::before {
+.fc .event--type-reserved .fc-event-title::before,
+.fc .event--type-reserved .fc-event-custom-title::before,
+calendar-element .event--type-reserved .fc-event-title::before,
+calendar-element .event--type-reserved .fc-event-custom-title::before {
   content: "\f02b";
 }
 

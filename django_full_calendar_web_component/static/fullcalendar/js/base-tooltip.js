@@ -11,9 +11,12 @@ class BaseTooltip {
   }
 
   getTooltipPosition() {
-    // Position the tooltip relative to the title (sticky) if it has one
+    // Position the tooltip relative to the title if it has one
     const eventTitle =
-      this.eventElem.querySelector(".fc-sticky") || this.eventElem;
+      this.eventElem.querySelector(".fc-event-custom-content") ||
+      this.eventElem.querySelector(".fc-event-custom-title") ||
+      this.eventElem.querySelector(".fc-sticky") ||
+      this.eventElem;
     const rect = eventTitle.getBoundingClientRect();
 
     const posX =
