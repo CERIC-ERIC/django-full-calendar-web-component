@@ -143,10 +143,11 @@ class CalendarElement extends HTMLElement {
   handleOptions(optionsStr) {
     this._options = JSON.parse(optionsStr);
     if (this._calendar) {
-      this._calendar.resetOptions(this._options);
+      this._calendar.resetOptions(this.getFullCalendarOptions());
     } else {
       const fcOptions = this.getFullCalendarOptions();
       let calendarEl = document.createElement("div");
+      calendarEl.className = "calendar-wrapper fc";
       this.appendChild(calendarEl);
       let calendar = new FullCalendar.Calendar(calendarEl, fcOptions);
       this._calendar = calendar;
@@ -192,6 +193,7 @@ class CalendarElement extends HTMLElement {
    * Convert an event object to FullCalendar format
    */
   eventToFCEvent = (event) => {
+    const classList = ["fc-event-clickable"];
     const newEvent = {
       id: `${event.id}`,
       start: event.start,
@@ -215,14 +217,13 @@ class CalendarElement extends HTMLElement {
             ? event.note
             : event.extendedProps?.note,
       },
-      classNames: ["fc-event-clickable"],
     };
     if (event.executed_remotely) {
       newEvent.extendedProps = {
         ...newEvent.extendedProps,
         executedRemotely: event.executed_remotely,
       };
-      newEvent.classNames = [...newEvent.classNames, "event--remote"];
+      classList.push("event--remote");
     }
 
     if (event.instrument) {
@@ -242,6 +243,7 @@ class CalendarElement extends HTMLElement {
         const proposalIndex = this._proposals.indexOf(proposal);
         const proposalColor = CalendarElement.getEventColor(proposalIndex);
         newEvent.title = proposal.title;
+        newEvent.color = proposalColor;
         newEvent.backgroundColor = proposalColor;
         newEvent.borderColor = proposalColor;
       }
@@ -252,12 +254,10 @@ class CalendarElement extends HTMLElement {
         ...newEvent.extendedProps,
         type: event.type,
       };
-      newEvent.classNames = [
-        ...newEvent.classNames,
-        `event--type-${event.type}`,
-      ];
+      classList.push(`event--type-${event.type}`);
 
       if (event.type === "reserved") {
+        newEvent.color = CalendarElement.RESERVED_BG;
         newEvent.backgroundColor = CalendarElement.RESERVED_BG;
         newEvent.borderColor = CalendarElement.RESERVED_BG;
         newEvent.title = "Reserved";
@@ -275,10 +275,16 @@ class CalendarElement extends HTMLElement {
     if (!newEvent.title) {
       newEvent.title = event.type === "experiment" ? "Experiment" : "Event";
     }
-    if (!newEvent.backgroundColor) {
+    if (!newEvent.color && !newEvent.backgroundColor) {
+      newEvent.color = CalendarElement.EVENT_COLORS[0];
       newEvent.backgroundColor = CalendarElement.EVENT_COLORS[0];
       newEvent.borderColor = CalendarElement.EVENT_COLORS[0];
+    } else if (!newEvent.color) {
+      newEvent.color = newEvent.backgroundColor;
     }
+
+    newEvent.className = classList.join(" ");
+    newEvent.classNames = classList;
 
     /* if (event.executed_remotely) {
       newEvent.title = `🌐 Remote · ${newEvent.title}`;
@@ -296,6 +302,14 @@ class CalendarElement extends HTMLElement {
    */
   getFullCalendarOptions = () => {
     const isReadOnly = this.hasAttribute("readonly");
+    const {
+      hasChangePermission,
+      hasDeletePermission,
+      themeSystem,
+      resourceAreaHeaderContent,
+      resourceAreaWidth,
+      ...customOptions
+    } = this._options || {};
 
     return {
       // === License key ===
@@ -313,18 +327,26 @@ class CalendarElement extends HTMLElement {
       eventContent: this.renderEventContent,
 
       // === Display options ===
-      initialView: this._options.initialView,
-      views: this._options.views,
-      headerToolbar: this._options.headerToolbar,
-      slotDuration: this._options.slotDuration,
-      themeSystem: "bootstrap5",
+      initialView: this._options?.initialView,
+      views: this._options?.views,
+      headerToolbar: this._options?.headerToolbar,
+      slotDuration: this._options?.slotDuration,
       nowIndicator: true,
-      resourceAreaHeaderContent: "Instruments",
-      resourceAreaWidth: "200px",
+      resourceColumnHeaderContent:
+        this._options?.resourceColumnHeaderContent ||
+        resourceAreaHeaderContent ||
+        "Instruments",
+      resourceColumnsWidth:
+        this._options?.resourceColumnsWidth ||
+        resourceAreaWidth ||
+        "200px",
       filterResourcesWithEvents: true,
 
+      // === Custom options from attribute ===
+      ...customOptions,
+
       // === Editing options ===
-      editable: this._options.hasChangePermission && !isReadOnly,
+      editable: hasChangePermission && !isReadOnly,
       eventOverlap: false,
       eventResourceEditable: false,
     };

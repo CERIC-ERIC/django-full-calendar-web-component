@@ -11,7 +11,7 @@ class FCTooltip extends BaseTooltip {
   static templates = null;
 
   static getInstance(eventInfo) {
-    const instanceId = eventInfo._instance.instanceId;
+    const instanceId = eventInfo?._instance?.instanceId || eventInfo?.id;
     return FCTooltip.TOOLTIP_INSTANCES[instanceId] || null;
   }
 
@@ -65,8 +65,10 @@ class FCTooltip extends BaseTooltip {
     this.setupTooltipListeners();
 
     // Store instance in static map for easy access
-    const instanceId = eventInfo._instance.instanceId;
-    FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;
+    const instanceId = eventInfo?._instance?.instanceId || eventInfo?.id;
+    if (instanceId) {
+      FCTooltip.TOOLTIP_INSTANCES[instanceId] = this;
+    }
   }
 
   initTemplates() {
@@ -151,7 +153,7 @@ class FCTooltip extends BaseTooltip {
 
     this.tooltip.innerHTML = FCTooltip.templates.infoView({
       title: eventInfo.title,
-      color: eventInfo.backgroundColor,
+      color: eventInfo.color || eventInfo.backgroundColor,
       actions: actions,
       extraInfo: extraInfo,
       startDate: startDate,
@@ -196,7 +198,7 @@ class FCTooltip extends BaseTooltip {
     const end = this.eventInfo.end || (start ? new Date(start.getTime() + 3600000) : null);
 
     this.tooltip.innerHTML = FCTooltip.templates.editView({
-      color: this.eventInfo.backgroundColor,
+      color: this.eventInfo.color || this.eventInfo.backgroundColor,
       actions: [], // No actions for edit view
       startDateInput: formatDateTimeForInput(start),
       endDateInput: formatDateTimeForInput(end),
@@ -304,6 +306,9 @@ class FCTooltip extends BaseTooltip {
     this.eventElem.removeEventListener("click", this.handleEventClick);
     this.removeListeners();
     this.tooltip.remove();
-    delete FCTooltip.TOOLTIP_INSTANCES[this.eventInfo._instance.instanceId];
+    const instanceId = this.eventInfo?._instance?.instanceId || this.eventInfo?.id;
+    if (instanceId) {
+      delete FCTooltip.TOOLTIP_INSTANCES[instanceId];
+    }
   }
 }
