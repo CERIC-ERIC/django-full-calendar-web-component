@@ -317,53 +317,64 @@ class CalendarElement extends HTMLElement {
       prev: {
         iconClass: "fas fa-chevron-left",
         display: "icon",
+        class: "btn btn-outline-secondary fc-btn-nav fc-btn-prev",
       },
       next: {
         iconClass: "fas fa-chevron-right",
         display: "icon",
+        class: "btn btn-outline-secondary fc-btn-nav fc-btn-next",
       },
       prevYear: {
         iconClass: "fas fa-angle-double-left",
         display: "icon",
+        class: "btn btn-outline-secondary fc-btn-nav fc-btn-prev-year",
       },
       nextYear: {
         iconClass: "fas fa-angle-double-right",
         display: "icon",
+        class: "btn btn-outline-secondary fc-btn-nav fc-btn-next-year",
       },
       today: {
         text: "Today",
         iconClass: "fas fa-calendar-day",
-        display: "icon",
+        display: "both",
+        class: "btn btn-outline-secondary fc-btn-nav fc-btn-today",
       },
       dayGridMonth: {
         text: "Month",
         iconClass: "fas fa-calendar-alt",
         display: "both",
+        class: "btn btn-primary fc-btn-view fc-btn-month",
       },
       dayGridDay: {
         text: "Day",
         iconClass: "fas fa-calendar-day",
         display: "both",
+        class: "btn btn-primary fc-btn-view fc-btn-day",
       },
       timeGridWeek: {
         text: "Week",
         iconClass: "fas fa-calendar-week",
         display: "both",
+        class: "btn btn-primary fc-btn-view fc-btn-week",
       },
       timeGridDay: {
         text: "Day",
         iconClass: "fas fa-calendar-day",
         display: "both",
+        class: "btn btn-primary fc-btn-view fc-btn-day",
       },
       resourceTimeline: {
         text: "Timeline",
         iconClass: "fas fa-stream",
         display: "both",
+        class: "btn btn-primary fc-btn-view fc-btn-timeline",
       },
       resourceTimelineFourDays: {
         text: "Timeline",
         iconClass: "fas fa-stream",
         display: "both",
+        class: "btn btn-primary fc-btn-view fc-btn-timeline",
       },
     };
 
