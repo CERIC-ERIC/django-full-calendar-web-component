@@ -227,6 +227,9 @@ class FCTooltip extends BaseTooltip {
       e.preventDefault();
       this.viewMode = "info";
     });
+
+    const tooltipPosition = this.getTooltipPosition();
+    this.showTooltip(tooltipPosition.x, tooltipPosition.y);
   }
 
   // Handler for saving event changes
