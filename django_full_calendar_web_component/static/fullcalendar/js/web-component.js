@@ -193,7 +193,7 @@ class CalendarElement extends HTMLElement {
    * Convert an event object to FullCalendar format
    */
   eventToFCEvent = (event) => {
-    const classList = ["fc-event-clickable"];
+    const classList = ["fc-event", "fc-event-clickable"];
     const newEvent = {
       id: `${event.id}`,
       start: event.start,
@@ -308,8 +308,87 @@ class CalendarElement extends HTMLElement {
       themeSystem,
       resourceAreaHeaderContent,
       resourceAreaWidth,
+      buttonText: deprecatedButtonText,
       ...customOptions
     } = this._options || {};
+
+    // Default button configurations with Font Awesome icons for toolbar buttons
+    const defaultButtons = {
+      prev: {
+        iconClass: "fas fa-chevron-left",
+        display: "icon",
+      },
+      next: {
+        iconClass: "fas fa-chevron-right",
+        display: "icon",
+      },
+      prevYear: {
+        iconClass: "fas fa-angle-double-left",
+        display: "icon",
+      },
+      nextYear: {
+        iconClass: "fas fa-angle-double-right",
+        display: "icon",
+      },
+      today: {
+        text: "Today",
+        iconClass: "fas fa-calendar-day",
+        display: "icon",
+      },
+      dayGridMonth: {
+        text: "Month",
+        iconClass: "fas fa-calendar-alt",
+        display: "both",
+      },
+      dayGridDay: {
+        text: "Day",
+        iconClass: "fas fa-calendar-day",
+        display: "both",
+      },
+      timeGridWeek: {
+        text: "Week",
+        iconClass: "fas fa-calendar-week",
+        display: "both",
+      },
+      timeGridDay: {
+        text: "Day",
+        iconClass: "fas fa-calendar-day",
+        display: "both",
+      },
+      resourceTimeline: {
+        text: "Timeline",
+        iconClass: "fas fa-stream",
+        display: "both",
+      },
+      resourceTimelineFourDays: {
+        text: "Timeline",
+        iconClass: "fas fa-stream",
+        display: "both",
+      },
+    };
+
+    const buttons = {
+      ...defaultButtons,
+      ...(this._options?.buttons || {}),
+    };
+
+    // Backward compatibility: map views[viewName].buttonText to buttons[viewName] for v7
+    if (this._options?.views) {
+      for (const [viewName, viewConfig] of Object.entries(this._options.views)) {
+        if (viewConfig) {
+          const existingBtn = buttons[viewName] || {};
+          buttons[viewName] = {
+            ...existingBtn,
+            ...(viewConfig.buttonText ? { text: viewConfig.buttonText } : {}),
+            ...(viewConfig.iconClass ? { iconClass: viewConfig.iconClass } : {}),
+            display:
+              viewConfig.buttonDisplay ||
+              existingBtn.display ||
+              (viewConfig.buttonText ? "both" : undefined),
+          };
+        }
+      }
+    }
 
     return {
       // === License key ===
@@ -330,6 +409,7 @@ class CalendarElement extends HTMLElement {
       initialView: this._options?.initialView,
       views: this._options?.views,
       headerToolbar: this._options?.headerToolbar,
+      buttons: buttons,
       slotDuration: this._options?.slotDuration,
       nowIndicator: true,
       resourceColumnHeaderContent:
