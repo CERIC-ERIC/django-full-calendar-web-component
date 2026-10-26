@@ -1,9 +1,11 @@
+/* Theme Styles for Calendar Element and FullCalendar v7 */
+
 .fc a,
 calendar-element a {
   color: #212529 !important;
 }
 
-/* Base icon styles for events*/
+/* Base icon styles for events */
 .fc .fc-event-title::before,
 .fc .fc-event-custom-title::before,
 calendar-element .fc-event-title::before,
@@ -27,6 +29,7 @@ calendar-element .event--type-reserved .fc-event-custom-title::before {
   content: "\f02b";
 }
 
+/* Event tooltips */
 .fc-tooltip {
   min-height: 100px;
   min-width: 300px;
@@ -43,7 +46,6 @@ calendar-element .event--type-reserved .fc-event-custom-title::before {
   border: 1px solid #dee2e6;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.18), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-
   transition: visibility 120ms ease-in-out, opacity 120ms ease-in-out;
   visibility: hidden;
   opacity: 0;
@@ -176,13 +178,25 @@ calendar-element .event--type-reserved .fc-event-custom-title::before {
   resize: vertical;
 }
 
+.fc-tooltip .btn,
 .fc-tooltip__body .btn {
   font-size: 0.85rem;
   font-weight: 500;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 5px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
 }
 
+.fc-tooltip .btn i,
+.fc-tooltip__body .btn i {
+  margin: 0 !important;
+  font-size: 0.9em;
+}
+
+/* Event elements */
 .fc-event-clickable {
   cursor: pointer;
 }
@@ -200,18 +214,7 @@ calendar-element .event--type-reserved .fc-event-custom-title::before {
   white-space: nowrap;
 }
 
-.fc-event-badge {
-  display: inline-block;
-  padding: 1px 5px;
-  margin-right: 4px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #0d6efd;
-  font-size: 0.7rem;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
+.fc-event-badge,
 .fc-event-badge--remote {
   display: inline-block;
   padding: 1px 5px;
@@ -224,16 +227,25 @@ calendar-element .event--type-reserved .fc-event-custom-title::before {
   line-height: 1.2;
 }
 
-/* Toolbar button icon styling and ergonomic layout */
+/* Toolbar button base layout and typography */
 calendar-element .btn,
+.calendar-wrapper .btn,
 .fc .btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 0.5rem !important;
-  padding: 0.4rem 0.85rem !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  box-sizing: border-box !important;
   font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  line-height: 1 !important;
+  border-radius: 4px !important;
   text-transform: capitalize;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
 calendar-element .btn .fas,
@@ -245,19 +257,81 @@ calendar-element .btn .bi {
   font-size: 0.95em;
 }
 
-calendar-element .btn span[class*="fa"],
-calendar-element .btn span[class*="bi"] {
-  margin-right: 0.45rem;
+/* Outline-secondary buttons: navigation (Today, prev chevron, next chevron) */
+calendar-element .btn.btn-outline-secondary,
+calendar-element .fc-btn-nav,
+calendar-element .fc-btn-today,
+.calendar-wrapper .btn.btn-outline-secondary,
+.fc .btn.btn-outline-secondary {
+  background-color: transparent !important;
+  border: 1px solid #6c757d !important;
+  color: #6c757d !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
-calendar-element .btn:has(span[class*="chevron"]:only-child) span,
-calendar-element .btn:has(span.fc-icon:only-child) span,
-calendar-element .btn:has(span[class*="calendar-day"]:only-child) span,
-calendar-element .btn:has(span:only-child) span {
-  margin-right: 0 !important;
+/* Hover state */
+calendar-element .btn.btn-outline-secondary:hover,
+calendar-element .fc-btn-nav:hover,
+calendar-element .fc-btn-today:hover,
+.calendar-wrapper .btn.btn-outline-secondary:hover,
+.fc .btn.btn-outline-secondary:hover {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
 }
 
-/* Font Awesome icon fallback for bi classes */
+/* Sizing and padding for icon-only navigation chevrons */
+calendar-element .fc-btn-prev,
+calendar-element .fc-btn-next,
+calendar-element .fc-btn-prev-year,
+calendar-element .fc-btn-next-year,
+calendar-element .btn:has(span[class*="chevron"]:only-child) {
+  width: 38px !important;
+  min-width: 38px !important;
+  padding: 0 !important;
+}
+
+/* Today button */
+calendar-element .fc-btn-today {
+  width: auto !important;
+  padding: 0 0.85rem !important;
+}
+
+/* Primary styling: view switcher buttons (Timeline, Month, Day) */
+calendar-element .fc-btn-view,
+calendar-element .btn.btn-primary,
+.calendar-wrapper .btn.btn-primary,
+.fc .btn.btn-primary {
+  background-color: #17a2b8 !important;
+  border-color: #17a2b8 !important;
+  color: #ffffff !important;
+  padding: 0 0.85rem !important;
+}
+
+calendar-element .btn.btn-primary:hover,
+calendar-element .fc-btn-view:hover,
+.calendar-wrapper .btn.btn-primary:hover,
+.fc .btn.btn-primary:hover {
+  background-color: #138496 !important;
+  border-color: #117a8b !important;
+  color: #ffffff !important;
+}
+
+calendar-element .btn.btn-primary.active,
+calendar-element .btn.btn-primary:active,
+calendar-element .fc-btn-view.active,
+calendar-element .fc-btn-view:active,
+.calendar-wrapper .btn.btn-primary.active,
+.fc .btn.btn-primary.active {
+  background-color: #117a8b !important;
+  border-color: #10707f !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125) !important;
+}
+
+/* Font Awesome icon fallbacks */
 calendar-element .bi.bi-chevron-left:empty::before,
 .fc .bi.bi-chevron-left:empty::before {
   content: "\f053";
