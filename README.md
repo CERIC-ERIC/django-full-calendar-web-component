@@ -179,3 +179,33 @@ The component emits the following custom events:
   - `changeInfo.oldEvent`: The previous state of the event before modification.
 - **remove**: Fired when an event is deleted via the Delete action button. The event `detail` object contains:
   - `removeInfo.event`: The FullCalendar event object to be removed.
+
+## Updating in PMS
+
+> [!IMPORTANT]
+> ### 📌 Note: Updating the Component in PMS (`uv.lock`)
+>
+> In `pyproject.toml` of PMS, the component is specified without a commit hash so it tracks the repository. However, `uv.lock` locks Git dependencies to an exact commit hash (`#<commit-sha>`) for reproducible builds in CI.
+>
+> **How to properly check and update it:**
+>
+> 1. In the PMS project root, sync your local environment:
+>    ```bash
+>    uv sync
+>    ```
+>
+> 2. Check if the locked commit in `uv.lock` matches the latest commit on GitHub `master`:
+>    - View the current locked commit in `uv.lock`:
+>      ```bash
+>      grep -A 2 'name = "django-full-calendar-web-component"' uv.lock
+>      ```
+>    - Check the latest commit on GitHub `master`:
+>      ```bash
+>      git ls-remote https://github.com/CERIC-ERIC/django-full-calendar-web-component refs/heads/master
+>      ```
+>
+> 3. If the commit in `uv.lock` differs from the one on GitHub, update the lockfile:
+>    ```bash
+>    uv lock --upgrade-package django-full-calendar-web-component
+>    ```
+>    Then commit and push the updated `uv.lock` to GitHub.
