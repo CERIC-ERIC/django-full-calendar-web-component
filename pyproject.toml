@@ -1,12 +1,11 @@
 [project]
 name = "django-full-calendar-web-component"
-version = "0.1.0"
-description = ""
+version = "1.0.0"
+description = "FullCalendar web component integration for Django"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
 ]
-
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
