@@ -5,6 +5,7 @@ description = "FullCalendar web component integration for Django"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "django>=4.2",
 ]
 
 [build-system]
