@@ -180,32 +180,88 @@ The component emits the following custom events:
 - **remove**: Fired when an event is deleted via the Delete action button. The event `detail` object contains:
   - `removeInfo.event`: The FullCalendar event object to be removed.
 
-## Updating in PMS
+## Releases and Versioning
 
-> [!IMPORTANT]
-> ### 📌 Note: Updating the Component in PMS (`uv.lock`)
->
-> In `pyproject.toml` of PMS, the component is specified without a commit hash so it tracks the repository. However, `uv.lock` locks Git dependencies to an exact commit hash (`#<commit-sha>`) for reproducible builds in CI.
->
-> **How to properly check and update it:**
->
-> 1. In the PMS project root, sync your local environment:
->    ```bash
->    uv sync
->    ```
->
-> 2. Check if the locked commit in `uv.lock` matches the latest commit on GitHub `master`:
->    - View the current locked commit in `uv.lock`:
->      ```bash
->      grep -A 2 'name = "django-full-calendar-web-component"' uv.lock
->      ```
->    - Check the latest commit on GitHub `master`:
->      ```bash
->      git ls-remote https://github.com/CERIC-ERIC/django-full-calendar-web-component refs/heads/master
->      ```
->
-> 3. If the commit in `uv.lock` differs from the one on GitHub, update the lockfile:
->    ```bash
->    uv lock --upgrade-package django-full-calendar-web-component
->    ```
->    Then commit and push the updated `uv.lock` to GitHub.
+This package follows [Semantic Versioning](https://semver.org/) (`<major>.<minor>.<patch>`):
+
+- **Patch** release (`1.0.1`): Bug fixes, styling refinements, and backward-compatible patches.
+- **Minor** release (`1.1.0`): New features, backward-compatible enhancements.
+- **Major** release (`2.0.0`): Breaking changes or major architectural upgrades.
+
+The single source of truth for the package version is `version` in `pyproject.toml`. Python code can inspect it at runtime via:
+```python
+import django_full_calendar_web_component
+print(django_full_calendar_web_component.__version__)
+```
+
+---
+
+### How to Create and Publish a New Release
+
+#### Option 1: Automated Release Script (Recommended)
+
+1. Make sure your changes are tested and committed to your branch (e.g. `feat/calendar-versioning` or `master`).
+2. Run the release script with your target semantic version:
+   ```bash
+   ./scripts/release.sh 1.0.1
+   ```
+   This script automatically:
+   - Validates semantic version syntax (`<major>.<minor>.<patch>`).
+   - Updates `version = "1.0.1"` in `pyproject.toml`.
+   - Runs the test suite to ensure the package is healthy.
+   - Creates the release commit (`chore(release): release v1.0.1`).
+   - Creates the annotated Git tag (`v1.0.1`).
+
+3. Push the release commit and tag to GitHub:
+   ```bash
+   git push origin <your-branch> --tags
+   # e.g.: git push origin feat/calendar-versioning --tags (or git push origin master --tags)
+   ```
+
+#### Option 2: Manual Release
+
+1. Update the version in `pyproject.toml`:
+   ```toml
+   [project]
+   version = "1.0.1"
+   ```
+2. Commit the version bump and create an annotated tag:
+   ```bash
+   git add pyproject.toml
+   git commit -m "chore(release): release v1.0.1"
+   git tag -a v1.0.1 -m "Release v1.0.1"
+   ```
+3. Push to GitHub with tags:
+   ```bash
+   git push origin <your-branch> --tags
+   # e.g.: git push origin feat/calendar-versioning --tags (or git push origin master --tags)
+   ```
+
+---
+
+### Automated GitHub Release Creation
+
+When you push a tag matching `v*.*.*` to GitHub:
+- The GitHub Actions workflow (`.github/workflows/release.yml`) automatically validates the tag against `pyproject.toml`.
+- Runs unit tests in CI.
+- Generates an official GitHub Release with auto-generated release notes.
+
+---
+
+### Consuming the New Version in PMS
+
+Once a tag (e.g. `v1.0.1`) is pushed to GitHub:
+
+1. **Check for available releases in PMS:**
+   ```bash
+   uv run pms-cli check-dependencies
+   ```
+
+2. **Upgrade PMS to the new release:**
+   ```bash
+   uv run pms-cli update-calendar 1.0.1
+   ```
+   *This automatically updates `pyproject.toml` and locks `uv.lock` to the new release tag.*
+
+3. **Automated Dependabot PRs:**
+   GitHub Dependabot in PMS will automatically detect the new release tag and open a Pull Request bumping the version.
